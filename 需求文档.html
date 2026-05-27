@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>私募基金组合功能需求文档</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+            background: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        /* 文档容器 */
+        .doc-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* 左侧索引 */
+        .doc-sidebar {
+            width: 280px;
+            background: #fff;
+            border-right: 1px solid #e8e8e8;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            overflow-y: auto;
+            z-index: 100;
+        }
+        
+        .doc-sidebar-header {
+            padding: 20px;
+            background: #1890ff;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .doc-nav {
+            padding: 16px 0;
+        }
+        
+        .doc-nav-item {
+            display: block;
+            padding: 10px 20px;
+            color: #333;
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+        
+        .doc-nav-item:hover {
+            background: #f0f7ff;
+            color: #1890ff;
+        }
+        
+        .doc-nav-item.active {
+            background: #e6f7ff;
+            color: #1890ff;
+            border-left-color: #1890ff;
+            font-weight: 500;
+        }
+        
+        .doc-nav-item.level2 {
+            padding-left: 35px;
+            font-size: 13px;
+        }
+        
+        .doc-nav-item.level3 {
+            padding-left: 50px;
+            font-size: 13px;
+        }
+        
+        /* 右侧内容 */
+        .doc-content {
+            flex: 1;
+            margin-left: 280px;
+            padding: 40px 60px;
+            max-width: 900px;
+        }
+        
+        .doc-content h1 {
+            font-size: 28px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #1890ff;
+        }
+        
+        .doc-content h2 {
+            font-size: 20px;
+            margin: 32px 0 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e8e8e8;
+        }
+        
+        .doc-content h3 {
+            font-size: 16px;
+            margin: 24px 0 12px;
+            color: #1890ff;
+        }
+        
+        .doc-content h4 {
+            font-size: 15px;
+            margin: 20px 0 10px;
+            color: #333;
+        }
+        
+        .doc-content p {
+            margin: 12px 0;
+            font-size: 14px;
+        }
+        
+        .doc-content ul, .doc-content ol {
+            margin: 12px 0;
+            padding-left: 24px;
+        }
+        
+        .doc-content li {
+            margin: 8px 0;
+            font-size: 14px;
+        }
+        
+        .doc-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 14px;
+        }
+        
+        .doc-content th, .doc-content td {
+            border: 1px solid #e8e8e8;
+            padding: 10px 12px;
+            text-align: left;
+        }
+        
+        .doc-content th {
+            background: #fafafa;
+            font-weight: 600;
+        }
+        
+        .doc-content blockquote {
+            background: #f6ffed;
+            border-left: 4px solid #52c41a;
+            padding: 12px 16px;
+            margin: 16px 0;
+            font-size: 14px;
+        }
+        
+        .doc-content hr {
+            border: none;
+            border-top: 1px solid #e8e8e8;
+            margin: 32px 0;
+        }
+        
+        .doc-content strong {
+            color: #1890ff;
+        }
+        
+        /* 索引折叠按钮 */
+        .toggle-sidebar {
+            position: fixed;
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+            width: 24px;
+            height: 60px;
+            background: #1890ff;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border-radius: 0 4px 4px 0;
+            z-index: 101;
+            font-size: 14px;
+            transition: left 0.3s;
+        }
+        
+        .toggle-sidebar:hover {
+            background: #40a9ff;
+        }
+        
+        .doc-container.sidebar-hidden .doc-sidebar {
+            left: -280px;
+        }
+        
+        .doc-container.sidebar-hidden .doc-content {
+            margin-left: 0;
+        }
+        
+        .doc-container.sidebar-hidden .toggle-sidebar {
+            left: 0;
+        }
+        
+        /* 响应式 */
+        @media (max-width: 900px) {
+            .doc-sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s;
+            }
+            .doc-sidebar.show {
+                transform: translateX(0);
+            }
+            .doc-content {
+                margin-left: 0;
+                padding: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="doc-container" id="docContainer">
+        <!-- 左侧索引 -->
+        <div class="doc-sidebar" id="docSidebar">
+            <div class="doc-sidebar-header">需求文档索引</div>
+            <nav class="doc-nav">
+                <a href="#section1" class="doc-nav-item">1. 系统概述</a>
+                <a href="#section1-1" class="doc-nav-item level2">1.1 项目名称</a>
+                <a href="#section1-2" class="doc-nav-item level2">1.2 项目背景</a>
+                <a href="#section1-3" class="doc-nav-item level2">1.3 目标用户</a>
+                
+                <a href="#section2" class="doc-nav-item">2. 功能模块</a>
+                <a href="#section2-1" class="doc-nav-item level2">2.1 组合列表</a>
+                <a href="#section2-1-1" class="doc-nav-item level3">2.1.1 页面入口</a>
+                <a href="#section2-1-2" class="doc-nav-item level3">2.1.2 页面布局</a>
+                <a href="#section2-1-3" class="doc-nav-item level3">2.1.3 功能需求</a>
+                <a href="#section2-2" class="doc-nav-item level2">2.2 新建组合</a>
+                <a href="#section2-2-1" class="doc-nav-item level3">2.2.1 页面入口</a>
+                <a href="#section2-2-2" class="doc-nav-item level3">2.2.2 页面布局</a>
+                <a href="#section2-2-3" class="doc-nav-item level3">2.2.3 功能需求</a>
+                <a href="#section2-3" class="doc-nav-item level2">2.3 组合详情</a>
+                <a href="#section2-3-1" class="doc-nav-item level3">2.3.1 页面入口</a>
+                <a href="#section2-3-2" class="doc-nav-item level3">2.3.2 页面布局</a>
+                <a href="#section2-3-3" class="doc-nav-item level3">2.3.3 Tab1：业绩分析</a>
+                <a href="#section2-3-4" class="doc-nav-item level3">2.3.4 Tab2：持仓明细</a>
+                <a href="#section2-3-5" class="doc-nav-item level3">2.3.5 Tab3：归因分析</a>
+                <a href="#section2-3-6" class="doc-nav-item level3">2.3.6 Tab4：调仓记录</a>
+                <a href="#section2-4" class="doc-nav-item level2">2.4 组合调仓</a>
+                <a href="#section2-4-1" class="doc-nav-item level3">2.4.1 页面入口</a>
+                <a href="#section2-4-2" class="doc-nav-item level3">2.4.2 页面布局</a>
+                
+                <a href="#section3" class="doc-nav-item">3. 数据规范</a>
+                <a href="#section3-1" class="doc-nav-item level2">3.1 组合类型</a>
+                <a href="#section3-2" class="doc-nav-item level2">3.2 基金类型</a>
+                <a href="#section3-3" class="doc-nav-item level2">3.3 调仓方向</a>
+                <a href="#section3-4" class="doc-nav-item level2">3.4 收益率颜色规范</a>
+                
+                <a href="#section4" class="doc-nav-item">4. 交互规范</a>
+                <a href="#section4-1" class="doc-nav-item level2">4.1 页面导航</a>
+                <a href="#section4-2" class="doc-nav-item level2">4.2 表格交互</a>
+                <a href="#section4-3" class="doc-nav-item level2">4.3 Tab切换</a>
+                <a href="#section4-4" class="doc-nav-item level2">4.4 弹窗交互</a>
+                
+                <a href="#section5" class="doc-nav-item">5. 技术规范</a>
+                <a href="#section5-1" class="doc-nav-item level2">5.1 响应式布局</a>
+                <a href="#section5-2" class="doc-nav-item level2">5.2 颜色规范</a>
+                <a href="#section5-3" class="doc-nav-item level2">5.3 字体规范</a>
+            </nav>
+        </div>
+        
+        <!-- 切换按钮 -->
+        <div class="toggle-sidebar" onclick="toggleSidebar()">&#8249;</div>
+        
+        <!-- 右侧内容 -->
+        <div class="doc-content">
+            <h1 id="section1">私募基金组合功能需求文档</h1>
+            
+            <h2 id="section1-1">1. 系统概述</h2>
+            
+            <h3 id="section1-1">1.1 项目名称</h3>
+            <p>私募基金组合管理系统</p>
+            
+            <h3 id="section1-2">1.2 项目背景</h3>
+            <p>为满足私募基金组合管理需求，提供组合创建、调仓、业绩分析、持仓管理、归因分析等功能，帮助投资经理高效管理投资组合。</p>
+            
+            <h3 id="section1-3">1.3 目标用户</h3>
+            <ul>
+                <li>投资经理</li>
+                <li>基金经理</li>
+                <li>投资分析师</li>
+            </ul>
+            
+            <hr>
+            
+            <h2 id="section2">2. 功能模块</h2>
+            
+            <h3 id="section2-1">2.1 组合列表</h3>
+            
+            <h4 id="section2-1-1">2.1.1 页面入口</h4>
+            <p>导航栏：组合列表</p>
+            
+            <h4 id="section2-1-2">2.1.2 页面布局</h4>
+            <ul>
+                <li><strong>顶部操作区</strong>：页面标题 + 新建组合按钮</li>
+                <li><strong>筛选区</strong>：组合类型筛选标签 + 搜索框</li>
+                <li><strong>数据表格</strong>：组合列表展示</li>
+            </ul>
+            
+            <h4 id="section2-1-3">2.1.3 功能需求</h4>
+            <p><strong>筛选功能：</strong></p>
+            <ul>
+                <li>组合类型筛选：全部、稳健、平衡、进取、CTA</li>
+                <li>搜索功能：按组合名称搜索</li>
+            </ul>
+            
+            <p><strong>表格字段：</strong></p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>字段名</th>
+                        <th>说明</th>
+                        <th>排序</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>组合名称</td><td>组合名称，点击可查看详情</td><td>支持</td></tr>
+                    <tr><td>组合类型</td><td>稳健/平衡/进取/CTA</td><td>支持</td></tr>
+                    <tr><td>创建人</td><td>组合创建者</td><td>支持</td></tr>
+                    <tr><td>成立以来收益</td><td>累计收益率</td><td>支持</td></tr>
+                    <tr><td>近一周</td><td>近一周收益率</td><td>支持</td></tr>
+                    <tr><td>近一月</td><td>近一月收益率</td><td>支持</td></tr>
+                    <tr><td>近一年</td><td>近一年收益率</td><td>支持</td></tr>
+                    <tr><td>今年以来</td><td>年初至今收益率</td><td>支持</td></tr>
+                    <tr><td>操作</td><td>查看详情、调仓按钮</td><td>-</td></tr>
+                </tbody>
+            </table>
+            
+            <p><strong>分页功能：</strong></p>
+            <ul>
+                <li>显示总条数和当前页码</li>
+                <li>支持页码切换</li>
+                <li>每页显示10条</li>
+            </ul>
+            
+            <hr>
+            
+            <h3 id="section2-2">2.2 新建组合</h3>
+            
+            <h4 id="section2-2-1">2.2.1 页面入口</h4>
+            <ul>
+                <li>导航栏：新建组合</li>
+                <li>组合列表页：新建组合按钮</li>
+            </ul>
+            
+            <h4 id="section2-2-2">2.2.2 页面布局</h4>
+            <p>多步骤向导形式，包含3个步骤：</p>
+            <ol>
+                <li>基本信息</li>
+                <li>选择基金</li>
+                <li>配置权重</li>
+            </ol>
+            
+            <h4 id="section2-2-3">2.2.3 功能需求</h4>
+            <p><strong>步骤1：基本信息</strong></p>
+            <table>
+                <thead>
+                    <tr><th>字段</th><th>类型</th><th>必填</th><th>说明</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>组合名称</td><td>文本</td><td>是</td><td>组合名称</td></tr>
+                    <tr><td>组合类型</td><td>下拉选择</td><td>是</td><td>稳健/平衡/进取/CTA</td></tr>
+                    <tr><td>初始资金</td><td>数字</td><td>是</td><td>默认1000万，支持自定义</td></tr>
+                    <tr><td>投资目标</td><td>文本域</td><td>否</td><td>组合投资目标描述</td></tr>
+                    <tr><td>备注</td><td>文本域</td><td>否</td><td>其他备注信息</td></tr>
+                </tbody>
+            </table>
+            
+            <p><strong>步骤2：选择基金</strong></p>
+            <ul>
+                <li>基金搜索框：支持按基金名称/代码搜索</li>
+                <li>基金列表展示：基金名称、代码、类型、净值</li>
+                <li>选择基金：点击"+"按钮添加至已选列表</li>
+                <li>已选基金列表：显示已选基金，支持删除</li>
+            </ul>
+            
+            <p><strong>步骤3：配置权重</strong></p>
+            <ul>
+                <li>权重输入：每个基金支持输入目标权重</li>
+                <li>权重校验：单个基金权重0-100%，不强制总和为100%</li>
+                <li>权重预览：实时显示权重分布</li>
+            </ul>
+            
+            <p><strong>操作按钮：</strong></p>
+            <ul>
+                <li>上一步/下一步：步骤间切换</li>
+                <li>保存：保存组合配置</li>
+                <li>取消：放弃创建返回列表</li>
+            </ul>
+            
+            <hr>
+            
+            <h3 id="section2-3">2.3 组合详情</h3>
+            
+            <h4 id="section2-3-1">2.3.1 页面入口</h4>
+            <ul>
+                <li>导航栏：组合详情</li>
+                <li>组合列表：查看详情按钮</li>
+            </ul>
+            
+            <h4 id="section2-3-2">2.3.2 页面布局</h4>
+            <p><strong>顶部指标卡片（6个）：</strong></p>
+            <table>
+                <thead>
+                    <tr><th>指标</th><th>说明</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>最新净值</td><td>当前净值及日涨跌</td></tr>
+                    <tr><td>成立以来收益</td><td>累计收益率</td></tr>
+                    <tr><td>年化收益</td><td>年化收益率</td></tr>
+                    <tr><td>最大回撤</td><td>历史最大回撤</td></tr>
+                    <tr><td>夏普比率</td><td>风险调整后收益指标</td></tr>
+                    <tr><td>波动率</td><td>收益波动率</td></tr>
+                </tbody>
+            </table>
+            
+            <p><strong>Tab切换区：</strong></p>
+            <ul>
+                <li>业绩分析</li>
+                <li>持仓明细</li>
+                <li>归因分析</li>
+                <li>调仓记录</li>
+            </ul>
+            
+            <h4 id="section2-3-3">2.3.3 Tab1：业绩分析</h4>
+            <p><strong>时间区间选择：</strong></p>
+            <p>近1月、近3月、近6月、近1年、成立以来（默认选中近1月）</p>
+            
+            <p><strong>收益走势图：</strong></p>
+            <ul>
+                <li>Y轴：收益率</li>
+                <li>X轴：时间轴，显示具体日期</li>
+                <li>两条线：本组合收益（蓝色实线）、基准收益（灰色虚线）</li>
+                <li>数据点：头尾用大圆点，中间用小圆点</li>
+                <li>Tooltip：显示期末收益率（本组合+基准）</li>
+            </ul>
+            
+            <p><strong>阶段业绩表格：</strong></p>
+            <table>
+                <thead>
+                    <tr><th>区间</th><th>组合收益</th><th>基准收益</th><th>超额收益</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>今年以来</td><td>取实际数据</td><td>取实际数据</td><td>取实际数据</td></tr>
+                    <tr><td>近一月</td><td>取实际数据</td><td>取实际数据</td><td>取实际数据</td></tr>
+                    <tr><td>近三月</td><td>取实际数据</td><td>取实际数据</td><td>取实际数据</td></tr>
+                    <tr><td>近六月</td><td>取实际数据</td><td>取实际数据</td><td>取实际数据</td></tr>
+                    <tr><td>近一年</td><td>取实际数据</td><td>取实际数据</td><td>取实际数据</td></tr>
+                    <tr><td>成立以来</td><td>取实际数据</td><td>取实际数据</td><td>取实际数据</td></tr>
+                </tbody>
+            </table>
+            <blockquote>说明：以上收益数据均取该组合的实际指标数据，根据组合成立日期至最新日期的真实净值计算得出。</blockquote>
+            
+            <p><strong>风险指标：</strong></p>
+            <ul>
+                <li>时间区间选择：近一年、近三年、近五年（默认近一年）</li>
+                <li>指标列表（均取该组合的实际指标数据）：
+                    <ul>
+                        <li>波动率</li>
+                        <li>最大回撤</li>
+                        <li>VaR(95%)</li>
+                        <li>夏普比率</li>
+                        <li>阿尔法</li>
+                        <li>贝塔</li>
+                    </ul>
+                </li>
+            </ul>
+            
+            <h4 id="section2-3-4">2.3.4 Tab2：持仓明细</h4>
+            <p><strong>资产配置饼图：</strong></p>
+            <ul><li>各资产类别占比取该组合的实际持仓数据</li></ul>
+            
+            <p><strong>基金类型分布：</strong></p>
+            <ul><li>各基金类型占比取该组合的实际持仓数据</li></ul>
+            
+            <p><strong>持仓明细表格：</strong></p>
+            <table>
+                <thead>
+                    <tr><th>字段</th><th>说明</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>序号</td><td>持仓序号</td></tr>
+                    <tr><td>基金名称</td><td>基金全称</td></tr>
+                    <tr><td>代码</td><td>基金代码</td></tr>
+                    <tr><td>权重</td><td>当前权重百分比</td></tr>
+                    <tr><td>持仓周期</td><td>持仓天数</td></tr>
+                    <tr><td>持仓成本（元）</td><td>持仓成本金额</td></tr>
+                    <tr><td>持仓市值（元）</td><td>当前市值</td></tr>
+                    <tr><td>持仓收益额（元）</td><td>收益金额，红涨绿跌</td></tr>
+                </tbody>
+            </table>
+            
+            <h4 id="section2-3-5">2.3.5 Tab3：归因分析</h4>
+            <p><strong>Brinson归因分析 - 收益分解</strong></p>
+            
+            <p><strong>大类资产归因表格：</strong></p>
+            <table>
+                <thead>
+                    <tr><th>资产类别</th><th>组合权重</th><th>基准权重</th><th>组合收益</th><th>基准收益</th><th>配置效应</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>取实际数据</td><td>取实际数据</td><td>取实际数据</td><td>取实际数据</td><td>取实际数据</td><td>取实际数据</td></tr>
+                </tbody>
+            </table>
+            <blockquote>说明：以上归因数据均取该组合的实际Brinson归因分析结果。</blockquote>
+            
+            <p><strong>基金明细归因表格：</strong></p>
+            <table>
+                <thead>
+                    <tr><th>基金名称</th><th>组合收益</th><th>基准收益</th><th>选择效应</th><th>交互效应</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>取实际数据</td><td>取实际数据</td><td>取实际数据</td><td>取实际数据</td><td>取实际数据</td></tr>
+                </tbody>
+            </table>
+            <blockquote>说明：以上基金明细归因数据均取该组合的实际基金归因分析结果。</blockquote>
+            
+            <h4 id="section2-3-6">2.3.6 Tab4：调仓记录</h4>
+            <p><strong>调仓记录表格：</strong></p>
+            <table>
+                <thead>
+                    <tr><th>字段</th><th>说明</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>调仓日期</td><td>调仓操作日期</td></tr>
+                    <tr><td>方向</td><td>加仓（红色）/减仓（绿色）</td></tr>
+                    <tr><td>基金名称</td><td>调仓基金</td></tr>
+                    <tr><td>调整前权重</td><td>调仓前权重</td></tr>
+                    <tr><td>调整后权重</td><td>调仓后权重</td></tr>
+                    <tr><td>变动</td><td>权重变动值</td></tr>
+                    <tr><td>调仓理由</td><td>调仓原因说明</td></tr>
+                </tbody>
+            </table>
+            
+            <hr>
+            
+            <h3 id="section2-4">2.4 组合调仓</h3>
+            
+            <h4 id="section2-4-1">2.4.1 页面入口</h4>
+            <ul>
+                <li>导航栏：组合调仓</li>
+                <li>组合列表：调仓按钮</li>
+                <li>组合详情：调仓按钮</li>
+            </ul>
+            
+            <h4 id="section2-4-2">2.4.2 页面布局</h4>
+            <p><strong>顶部信息区：</strong></p>
+            <ul>
+                <li>组合名称</li>
+                <li>当前净值</li>
+                <li>当前总收益</li>
+            </ul>
+            
+            <p><strong>操作区：</strong></p>
+            <ul><li>添加基金按钮</li></ul>
+            
+            <p><strong>调仓表格：</strong></p>
+            <table>
+                <thead>
+                    <tr><th>字段</th><th>说明</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>序号</td><td>序号</td></tr>
+                    <tr><td>基金名称</td><td>基金名称</td></tr>
+                    <tr><td>代码</td><td>基金代码</td></tr>
+                    <tr><td>当前权重</td><td>当前持仓权重</td></tr>
+                    <tr><td>目标权重</td><td>输入框，可编辑</td></tr>
+                    <tr><td>调仓理由</td><td>输入框，填写调仓原因</td></tr>
+                </tbody>
+            </table>
+            
+            <p><strong>底部操作：</strong></p>
+            <ul>
+                <li>保存调仓：保存调仓配置</li>
+                <li>取消：放弃调仓返回</li>
+            </ul>
+            
+            <p><strong>添加基金弹窗：</strong></p>
+            <ul>
+                <li>搜索框：搜索基金</li>
+                <li>基金列表：展示可选基金</li>
+                <li>点击"+"添加至调仓列表</li>
+            </ul>
+            
+            <hr>
+            
+            <h2 id="section3">3. 数据规范</h2>
+            
+            <h3 id="section3-1">3.1 组合类型</h3>
+            <ul>
+                <li>稳健型</li>
+                <li>平衡型</li>
+                <li>进取型</li>
+                <li>CTA型</li>
+            </ul>
+            
+            <h3 id="section3-2">3.2 基金类型</h3>
+            <ul><li>取基金二级分类数据</li></ul>
+            
+            <h3 id="section3-3">3.3 调仓方向</h3>
+            <ul>
+                <li>加仓（红色显示）</li>
+                <li>减仓（绿色显示）</li>
+            </ul>
+            
+            <h3 id="section3-4">3.4 收益率颜色规范</h3>
+            <ul>
+                <li>正收益：红色（#cf1322）</li>
+                <li>负收益：绿色（#52c41a）</li>
+            </ul>
+            
+            <hr>
+            
+            <h2 id="section4">4. 交互规范</h2>
+            
+            <h3 id="section4-1">4.1 页面导航</h3>
+            <ul>
+                <li>顶部导航栏固定</li>
+                <li>点击导航切换页面</li>
+                <li>当前页面高亮显示</li>
+            </ul>
+            
+            <h3 id="section4-2">4.2 表格交互</h3>
+            <ul>
+                <li>表头点击排序</li>
+                <li>行悬停高亮</li>
+                <li>操作按钮点击响应</li>
+            </ul>
+            
+            <h3 id="section4-3">4.3 Tab切换</h3>
+            <ul>
+                <li>点击Tab切换内容</li>
+                <li>当前Tab高亮</li>
+                <li>内容平滑切换</li>
+            </ul>
+            
+            <h3 id="section4-4">4.4 弹窗交互</h3>
+            <ul>
+                <li>点击遮罩关闭</li>
+                <li>点击X按钮关闭</li>
+                <li>确认/取消按钮</li>
+            </ul>
+            
+            <hr>
+            
+            <h2 id="section5">5. 技术规范</h2>
+            
+            <h3 id="section5-1">5.1 响应式布局</h3>
+            <ul>
+                <li>最小宽度：1200px</li>
+                <li>最大宽度：1400px</li>
+                <li>居中显示</li>
+            </ul>
+            
+            <h3 id="section5-2">5.2 颜色规范</h3>
+            <ul>
+                <li>主色：#1890ff（蓝色）</li>
+                <li>成功：#52c41a（绿色）</li>
+                <li>危险：#ff4d4f（红色）</li>
+                <li>背景：#f5f7fa（浅灰）</li>
+                <li>文字：#333（主文字）、#666（次要文字）</li>
+            </ul>
+            
+            <h3 id="section5-3">5.3 字体规范</h3>
+            <ul>
+                <li>中文字体：Microsoft YaHei</li>
+                <li>英文字体：-apple-system, BlinkMacSystemFont, Segoe UI</li>
+                <li>基础字号：14px</li>
+                <li>标题字号：18px-24px</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script>
+        // 索引切换
+        function toggleSidebar() {
+            document.getElementById('docContainer').classList.toggle('sidebar-hidden');
+        }
+        
+        // 高亮当前章节
+        const sections = document.querySelectorAll('[id^="section"]');
+        const navItems = document.querySelectorAll('.doc-nav-item');
+        
+        function highlightNav() {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (window.scrollY >= sectionTop - 100) {
+                    current = section.getAttribute('id');
+                }
+            });
+            
+            navItems.forEach(item => {
+                item.classList.remove('active');
+                if (item.getAttribute('href') === '#' + current) {
+                    item.classList.add('active');
+                }
+            });
+        }
+        
+        window.addEventListener('scroll', highlightNav);
+        
+        // 平滑滚动
+        navItems.forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href').substring(1);
+                const targetElement = document.getElementById(targetId);
+                if (targetElement) {
+                    targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
