@@ -1,0 +1,2834 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>私募基金组合功能原型</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+            background: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        /* 导航栏 */
+        .navbar {
+            background: #1890ff;
+            color: white;
+            padding: 0 24px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+        
+        .navbar-brand {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .navbar-links {
+            display: flex;
+            gap: 24px;
+        }
+        
+        .navbar-links a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .navbar-links a:hover, .navbar-links a.active {
+            background: rgba(255,255,255,0.2);
+        }
+        
+        /* 主容器 */
+        .main-container {
+            margin-top: 56px;
+            padding: 24px;
+            max-width: 1400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        /* 页面标题 */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        
+        .page-title {
+            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        /* 按钮样式 */
+        .btn {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: #1890ff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #40a9ff;
+        }
+        
+        .btn-default {
+            background: white;
+            border: 1px solid #d9d9d9;
+            color: #333;
+        }
+        
+        .btn-default:hover {
+            border-color: #1890ff;
+            color: #1890ff;
+        }
+        
+        .btn-success {
+            background: #52c41a;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #73d13d;
+        }
+        
+        .btn-danger {
+            background: #ff4d4f;
+            color: white;
+        }
+        
+        /* 筛选栏 */
+        .filter-bar {
+            background: white;
+            padding: 16px 24px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-tabs {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .filter-tab {
+            padding: 6px 16px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .filter-tab.active {
+            background: #1890ff;
+            color: white;
+            border-color: #1890ff;
+        }
+        
+        .search-box {
+            display: flex;
+            gap: 8px;
+            margin-left: auto;
+        }
+        
+        .search-box input {
+            padding: 6px 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            width: 200px;
+        }
+        
+        /* 数据表格 */
+        .data-table {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .data-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .data-table th, .data-table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .data-table th {
+            background: #fafafa;
+            font-weight: 600;
+            color: #333;
+            cursor: pointer;
+        }
+        
+        .data-table th:hover {
+            background: #f0f0f0;
+        }
+        
+        .data-table tr:hover {
+            background: #f5f5f5;
+        }
+        
+        /* 标签 */
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .tag-conservative { background: #e6f7ff; color: #096dd9; }
+        .tag-balanced { background: #f6ffed; color: #389e0d; }
+        .tag-aggressive { background: #fff1f0; color: #cf1322; }
+        .tag-cta { background: #fff7e6; color: #d46b08; }
+        
+        /* 涨跌颜色 */
+        .gain { color: #cf1322; }
+        .loss { color: #52c41a; }
+        
+        /* 分页 */
+        .pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            border-top: 1px solid #f0f0f0;
+        }
+        
+        .pagination-info {
+            color: #666;
+        }
+        
+        .pagination-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .pagination-btn {
+            padding: 4px 12px;
+            border: 1px solid #d9d9d9;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .pagination-btn.active {
+            background: #1890ff;
+            color: white;
+            border-color: #1890ff;
+        }
+        
+        /* 弹窗 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal.show {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow: auto;
+        }
+        
+        .modal-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h3 {
+            font-size: 18px;
+        }
+        
+        .modal-close {
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+        
+        .modal-close:hover {
+            color: #333;
+        }
+        
+        .modal-body {
+            padding: 24px;
+        }
+        
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+        
+        /* 向导步骤 */
+        .wizard-steps {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 32px;
+            padding: 24px 0;
+        }
+        
+        .wizard-step {
+            display: flex;
+            align-items: center;
+        }
+        
+        .wizard-step-number {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #d9d9d9;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+        
+        .wizard-step.active .wizard-step-number {
+            background: #1890ff;
+        }
+        
+        .wizard-step.completed .wizard-step-number {
+            background: #52c41a;
+        }
+        
+        .wizard-step-label {
+            margin-left: 8px;
+            color: #999;
+        }
+        
+        .wizard-step.active .wizard-step-label {
+            color: #1890ff;
+            font-weight: 500;
+        }
+        
+        .wizard-step.completed .wizard-step-label {
+            color: #52c41a;
+        }
+        
+        .wizard-step-arrow {
+            margin: 0 16px;
+            color: #d9d9d9;
+        }
+        
+        /* 表单 */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .form-label .required {
+            color: #ff4d4f;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #1890ff;
+        }
+        
+        .form-select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            font-size: 14px;
+            background: white;
+        }
+        
+        .form-textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            font-size: 14px;
+            min-height: 80px;
+            resize: vertical;
+        }
+        
+        .radio-group {
+            display: flex;
+            gap: 24px;
+        }
+        
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .form-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 32px;
+        }
+        
+        /* 双栏布局 */
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+        
+        .column-section {
+            background: #fafafa;
+            padding: 16px;
+            border-radius: 8px;
+        }
+        
+        .column-section h4 {
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e8e8e8;
+        }
+        
+        /* 已选基金列表 */
+        .selected-funds {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .fund-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: white;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            border: 1px solid #e8e8e8;
+        }
+        
+        .fund-item-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .fund-item-name {
+            font-weight: 500;
+        }
+        
+        .fund-item-type {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .fund-item-remove {
+            color: #ff4d4f;
+            cursor: pointer;
+        }
+        
+        /* 基金列表 */
+        .fund-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .fund-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+        }
+        
+        .fund-list-item:hover {
+            background: #f5f5f5;
+        }
+        
+        .fund-list-item-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .fund-add-btn {
+            color: #1890ff;
+            font-size: 20px;
+        }
+        
+        /* 权重表格 */
+        .weight-table {
+            width: 100%;
+        }
+        
+        .weight-table th, .weight-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .weight-table th {
+            background: #fafafa;
+        }
+        
+        .weight-input {
+            width: 100px;
+            padding: 4px 8px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            text-align: right;
+        }
+        
+        .weight-total {
+            font-weight: 600;
+            text-align: right;
+            padding: 12px;
+            background: #fafafa;
+        }
+        
+        /* Tab页 */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #e8e8e8;
+            margin-bottom: 24px;
+        }
+        
+        .tab-item {
+            padding: 12px 24px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        
+        .tab-item:hover {
+            color: #1890ff;
+        }
+        
+        .tab-item.active {
+            color: #1890ff;
+            border-bottom-color: #1890ff;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* 概览卡片 */
+        .overview-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .overview-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .overview-card-label {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+        
+        .overview-card-value {
+            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        /* 图表区域 */
+        .chart-container {
+            background: white;
+            padding: 24px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+        }
+        
+        .chart-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+        
+        .chart-placeholder {
+            height: 300px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+        }
+        
+        /* 指标卡片 */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+        }
+        
+        .metric-item {
+            background: white;
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid #e8e8e8;
+        }
+        
+        .metric-label {
+            color: #666;
+            font-size: 12px;
+            margin-bottom: 4px;
+        }
+        
+        .metric-value {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        /* 调仓对比 */
+        .rebalance-compare {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+        
+        .rebalance-column {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        
+        .rebalance-arrow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            color: #1890ff;
+        }
+        
+        /* 调仓明细 */
+        .rebalance-detail-table {
+            width: 100%;
+            background: white;
+            border-radius: 8px;
+        }
+        
+        .rebalance-detail-table th, .rebalance-detail-table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .rebalance-detail-table th {
+            background: #fafafa;
+        }
+        
+        /* 归因分析 */
+        .attribution-summary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 24px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+        }
+        
+        .attribution-total {
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+        
+        .attribution-breakdown {
+            display: flex;
+            gap: 24px;
+        }
+        
+        .attribution-item {
+            flex: 1;
+            background: rgba(255,255,255,0.2);
+            padding: 12px 16px;
+            border-radius: 8px;
+        }
+        
+        .attribution-item-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .attribution-item-value {
+            font-size: 20px;
+            font-weight: 600;
+        }
+        
+        .attribution-item-percent {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+        
+        /* 调仓记录 */
+        .record-item {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 16px;
+            border: 1px solid #e8e8e8;
+        }
+        
+        .record-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .record-date {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .record-reason {
+            color: #666;
+            margin-bottom: 12px;
+        }
+        
+        .record-details {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .record-change {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #f5f5f5;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        
+        .record-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        /* Toast提示 */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #333;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            display: none;
+            z-index: 3000;
+        }
+        
+        .toast.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        /* 隐藏页面 */
+        .page {
+            display: none;
+        }
+        
+        .page.active {
+            display: block;
+        }
+        
+        /* 确认页样式 */
+        .confirm-section {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+        
+        .confirm-section-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e8e8e8;
+        }
+        
+        .confirm-row {
+            display: flex;
+            padding: 8px 0;
+        }
+        
+        .confirm-label {
+            width: 100px;
+            color: #666;
+        }
+        
+        .confirm-value {
+            flex: 1;
+            font-weight: 500;
+        }
+        
+        /* 提示信息 */
+        .hint {
+            font-size: 12px;
+            color: #999;
+            margin-top: 4px;
+        }
+        
+        /* 调仓页面 */
+        .rebalance-page {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+        }
+        
+        .rebalance-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #e8e8e8;
+            margin-bottom: 24px;
+        }
+        
+        /* 详情页 */
+        .detail-header {
+            background: white;
+            padding: 24px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+        }
+        
+        /* 操作按钮组 */
+        .action-group {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn-link {
+            background: none;
+            border: none;
+            color: #1890ff;
+            cursor: pointer;
+            padding: 4px 8px;
+        }
+        
+        .btn-link:hover {
+            text-decoration: underline;
+        }
+        
+        /* 筛选条件 */
+        .search-filters {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        
+        .search-filters select {
+            padding: 6px 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            background: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="navbar-brand">私募基金组合管理</div>
+        <div class="navbar-links">
+            <a class="active" data-page="list">组合列表</a>
+            <a data-page="create">新建组合</a>
+            <a data-page="detail">组合详情</a>
+            <a data-page="rebalance">组合调仓</a>
+        </div>
+    </nav>
+    
+    <!-- 主容器 -->
+    <div class="main-container">
+        
+        <!-- 页面1: 组合列表 -->
+        <div id="page-list" class="page active">
+            <div class="page-header">
+                <h1 class="page-title">私募基金组合管理</h1>
+                <button class="btn btn-primary" onclick="navigateTo('create')">+ 新建组合</button>
+            </div>
+            
+            <div class="filter-bar">
+                <div class="filter-tabs">
+                    <button class="filter-tab active" data-type="all">全部</button>
+                    <button class="filter-tab" data-type="conservative">稳健</button>
+                    <button class="filter-tab" data-type="balanced">平衡</button>
+                    <button class="filter-tab" data-type="aggressive">进取</button>
+                    <button class="filter-tab" data-type="cta">CTA</button>
+                </div>
+                <div class="search-box">
+                    <input type="text" placeholder="搜索组合名称">
+                    <button class="btn btn-default">查询</button>
+                </div>
+            </div>
+            
+            <div class="data-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>组合名称</th>
+                            <th>组合类型</th>
+                            <th>创建人</th>
+                            <th>成立以来收益</th>
+                            <th>近一周</th>
+                            <th>近一月</th>
+                            <th>近一年</th>
+                            <th>今年以来</th>
+                            <th>成立日期</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><a href="#" onclick="navigateTo('detail')" style="color:#1890ff;text-decoration:none;">我的稳健私募基金</a></td>
+                            <td><span class="tag tag-balanced">平衡</span></td>
+                            <td>张三</td>
+                            <td class="gain">+23.45%</td>
+                            <td class="gain">+0.85%</td>
+                            <td class="gain">+2.34%</td>
+                            <td class="gain">+8.92%</td>
+                            <td class="gain">+5.67%</td>
+                            <td>2023-01-15</td>
+                            <td>
+                                <div class="action-group">
+                                    <button class="btn-link" onclick="navigateTo('detail')">详情</button>
+                                    <button class="btn-link" onclick="navigateTo('rebalance')">调仓</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><a href="#" onclick="navigateTo('detail')" style="color:#1890ff;text-decoration:none;">科技成长组合</a></td>
+                            <td><span class="tag tag-aggressive">进取</span></td>
+                            <td>李四</td>
+                            <td class="loss">-1.24%</td>
+                            <td class="loss">-0.32%</td>
+                            <td class="loss">-1.05%</td>
+                            <td class="gain">+3.21%</td>
+                            <td class="loss">-0.89%</td>
+                            <td>2023-06-20</td>
+                            <td>
+                                <div class="action-group">
+                                    <button class="btn-link" onclick="navigateTo('detail')">详情</button>
+                                    <button class="btn-link" onclick="navigateTo('rebalance')">调仓</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><a href="#" onclick="navigateTo('detail')" style="color:#1890ff;text-decoration:none;">固收增强组合</a></td>
+                            <td><span class="tag tag-conservative">稳健</span></td>
+                            <td>王五</td>
+                            <td class="gain">+5.67%</td>
+                            <td class="gain">+0.12%</td>
+                            <td class="gain">+0.45%</td>
+                            <td class="gain">+2.89%</td>
+                            <td class="gain">+1.23%</td>
+                            <td>2023-03-10</td>
+                            <td>
+                                <div class="action-group">
+                                    <button class="btn-link" onclick="navigateTo('detail')">详情</button>
+                                    <button class="btn-link" onclick="navigateTo('rebalance')">调仓</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><a href="#" onclick="navigateTo('detail')" style="color:#1890ff;text-decoration:none;">灵活配置组合</a></td>
+                            <td><span class="tag tag-mixed">混合型</span></td>
+                            <td>张三</td>
+                            <td class="gain">+10.23%</td>
+                            <td class="gain">+0.56%</td>
+                            <td class="gain">+1.78%</td>
+                            <td class="gain">+6.45%</td>
+                            <td class="gain">+3.12%</td>
+                            <td>2023-09-05</td>
+                            <td>
+                                <div class="action-group">
+                                    <button class="btn-link" onclick="navigateTo('detail')">详情</button>
+                                    <button class="btn-link" onclick="navigateTo('rebalance')">调仓</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><a href="#" onclick="navigateTo('detail')" style="color:#1890ff;text-decoration:none;">现金管理组合</a></td>
+                            <td><span class="tag tag-cta">CTA</span></td>
+                            <td>赵六</td>
+                            <td class="gain">+0.89%</td>
+                            <td class="gain">+0.05%</td>
+                            <td class="gain">+0.21%</td>
+                            <td class="gain">+0.78%</td>
+                            <td class="gain">+0.35%</td>
+                            <td>2024-01-20</td>
+                            <td>
+                                <div class="action-group">
+                                    <button class="btn-link" onclick="navigateTo('detail')">详情</button>
+                                    <button class="btn-link" onclick="navigateTo('rebalance')">调仓</button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="pagination">
+                    <div class="pagination-info">共 25 条记录</div>
+                    <div class="pagination-controls">
+                        <button class="pagination-btn">上一页</button>
+                        <button class="pagination-btn active">1</button>
+                        <button class="pagination-btn">2</button>
+                        <button class="pagination-btn">3</button>
+                        <span>...</span>
+                        <button class="pagination-btn">10</button>
+                        <button class="pagination-btn">下一页</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 页面2: 新建组合 -->
+        <div id="page-create" class="page">
+            <div class="page-header">
+                <h1 class="page-title">新建私募基金组合</h1>
+            </div>
+            
+            <!-- 向导步骤 -->
+            <div class="wizard-steps">
+                <div class="wizard-step active" data-step="1">
+                    <span class="wizard-step-number">1</span>
+                    <span class="wizard-step-label">基本信息</span>
+                </div>
+                <span class="wizard-step-arrow">→</span>
+                <div class="wizard-step" data-step="2">
+                    <span class="wizard-step-number">2</span>
+                    <span class="wizard-step-label">选择基金</span>
+                </div>
+                <span class="wizard-step-arrow">→</span>
+                <div class="wizard-step" data-step="3">
+                    <span class="wizard-step-number">3</span>
+                    <span class="wizard-step-label">配置权重</span>
+                </div>
+                <span class="wizard-step-arrow">→</span>
+                <div class="wizard-step" data-step="4">
+                    <span class="wizard-step-number">4</span>
+                    <span class="wizard-step-label">确认创建</span>
+                </div>
+            </div>
+            
+            <!-- 步骤1: 基本信息 -->
+            <div class="wizard-content" data-content="1">
+                <div class="confirm-section" style="padding: 32px;">
+                    <div class="form-group">
+                        <label class="form-label">组合名称 <span class="required">*</span></label>
+                        <input type="text" class="form-input" placeholder="请输入组合名称，2-50个字符" id="portfolio-name">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">组合类型 <span class="required">*</span></label>
+                        <div class="radio-group">
+                            <label class="radio-item">
+                                <input type="radio" name="portfolio-type" value="conservative"> 稳健
+                            </label>
+                            <label class="radio-item">
+                                <input type="radio" name="portfolio-type" value="balanced" checked> 平衡
+                            </label>
+                            <label class="radio-item">
+                                <input type="radio" name="portfolio-type" value="aggressive"> 进取
+                            </label>
+                            <label class="radio-item">
+                                <input type="radio" name="portfolio-type" value="cta"> CTA
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">初始资金 <span class="required">*</span></label>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <input type="number" class="form-input" style="width: 200px;" value="1000" id="initial-capital">
+                            <span>万元</span>
+                        </div>
+                        <div class="hint">默认1000万，支持自定义输入</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">基准指数 <span class="required">*</span></label>
+                        <select class="form-select" style="width: 300px;">
+                            <option value="">请选择基准指数</option>
+                            <option value="hs300" selected>沪深300指数</option>
+                            <option value="csi500">中证500指数</option>
+                            <option value="csi800">中证800指数</option>
+                            <option value="nfi">中证全债指数</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">投资目标/备注</label>
+                        <textarea class="form-textarea" placeholder="请输入投资目标或备注信息（可选）" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button class="btn btn-default" onclick="navigateTo('list')">取消</button>
+                        <button class="btn btn-primary" onclick="nextStep()">下一步 →</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 步骤2: 选择基金 -->
+            <div class="wizard-content" data-content="2" style="display: none;">
+                <div class="two-column" style="padding: 0 24px;">
+                    <div class="column-section">
+                        <h4>基金选择</h4>
+                        <div class="search-filters" style="margin-bottom: 16px;">
+                            <select>
+                                <option>全部类型</option>
+                                <option>股票型</option>
+                                <option>债券型</option>
+                                <option>混合型</option>
+                                <option>指数型</option>
+                            </select>
+                            <input type="text" placeholder="搜索基金名称/代码" style="flex:1;padding:6px 12px;border:1px solid #d9d9d9;border-radius:4px;">
+                        </div>
+                        <div class="fund-list" id="available-funds">
+                            <div class="fund-list-item" onclick="addFund(this, '沪深300ETF', '000001')">
+                                <div class="fund-list-item-info">
+                                    <input type="checkbox">
+                                    <div>
+                                        <div class="fund-item-name">沪深300ETF</div>
+                                        <div class="fund-item-type">000001 | 股票型</div>
+                                    </div>
+                                </div>
+                                <span class="fund-add-btn">+</span>
+                            </div>
+                            <div class="fund-list-item" onclick="addFund(this, '中证500ETF', '000002')">
+                                <div class="fund-list-item-info">
+                                    <input type="checkbox">
+                                    <div>
+                                        <div class="fund-item-name">中证500ETF</div>
+                                        <div class="fund-item-type">000002 | 股票型</div>
+                                    </div>
+                                </div>
+                                <span class="fund-add-btn">+</span>
+                            </div>
+                            <div class="fund-list-item" onclick="addFund(this, '纯债基金A', '000003')">
+                                <div class="fund-list-item-info">
+                                    <input type="checkbox">
+                                    <div>
+                                        <div class="fund-item-name">纯债基金A</div>
+                                        <div class="fund-item-type">000003 | 债券型</div>
+                                    </div>
+                                </div>
+                                <span class="fund-add-btn">+</span>
+                            </div>
+                            <div class="fund-list-item" onclick="addFund(this, '灵活配置混合', '000004')">
+                                <div class="fund-list-item-info">
+                                    <input type="checkbox">
+                                    <div>
+                                        <div class="fund-item-name">灵活配置混合</div>
+                                        <div class="fund-item-type">000004 | 混合型</div>
+                                    </div>
+                                </div>
+                                <span class="fund-add-btn">+</span>
+                            </div>
+                            <div class="fund-list-item" onclick="addFund(this, '货币基金B', '000005')">
+                                <div class="fund-list-item-info">
+                                    <input type="checkbox">
+                                    <div>
+                                        <div class="fund-item-name">货币基金B</div>
+                                        <div class="fund-item-type">000005 | 货币型</div>
+                                    </div>
+                                </div>
+                                <span class="fund-add-btn">+</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="column-section">
+                        <h4>已选基金 (<span id="selected-count">0</span>)</h4>
+                        <div class="selected-funds" id="selected-funds-list">
+                            <div style="text-align: center; color: #999; padding: 40px;">
+                                尚未选择基金<br><small>点击左侧 + 号添加</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-actions" style="padding: 24px;">
+                    <button class="btn btn-default" onclick="prevStep()">← 上一步</button>
+                    <button class="btn btn-primary" onclick="nextStep()">下一步 →</button>
+                </div>
+            </div>
+            
+            <!-- 步骤3: 配置权重 -->
+            <div class="wizard-content" data-content="3" style="display: none;">
+                <div class="confirm-section" style="padding: 24px;">
+                    <h4 style="margin-bottom: 16px;">配置各基金权重</h4>
+                    <table class="weight-table">
+                        <thead>
+                            <tr>
+                                <th>基金名称</th>
+                                <th>基金代码</th>
+                                <th>目标权重</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="weight-funds-body">
+                            <tr>
+                                <td>沪深300ETF</td>
+                                <td>000001</td>
+                                <td><input type="number" class="weight-input" value="25" onchange="updateWeightTotal()"> %</td>
+                                <td><button class="btn-link" style="color:#ff4d4f;" onclick="removeWeightFund(this)">删除</button></td>
+                            </tr>
+                            <tr>
+                                <td>中证500ETF</td>
+                                <td>000002</td>
+                                <td><input type="number" class="weight-input" value="25" onchange="updateWeightTotal()"> %</td>
+                                <td><button class="btn-link" style="color:#ff4d4f;" onclick="removeWeightFund(this)">删除</button></td>
+                            </tr>
+                            <tr>
+                                <td>纯债基金A</td>
+                                <td>000003</td>
+                                <td><input type="number" class="weight-input" value="25" onchange="updateWeightTotal()"> %</td>
+                                <td><button class="btn-link" style="color:#ff4d4f;" onclick="removeWeightFund(this)">删除</button></td>
+                            </tr>
+                            <tr>
+                                <td>灵活配置混合</td>
+                                <td>000004</td>
+                                <td><input type="number" class="weight-input" value="25" onchange="updateWeightTotal()"> %</td>
+                                <td><button class="btn-link" style="color:#ff4d4f;" onclick="removeWeightFund(this)">删除</button></td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="2" class="weight-total">合计</td>
+                                <td class="weight-total" id="weight-total">100%</td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                    <div class="hint" style="margin-top: 12px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="16" x2="12" y2="12"></line>
+                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                        </svg>
+                        权重合计不要求等于100%，系统将按比例分配初始资金
+                    </div>
+                </div>
+                
+                <div class="form-actions" style="padding: 24px;">
+                    <button class="btn btn-default" onclick="prevStep()">← 上一步</button>
+                    <button class="btn btn-primary" onclick="nextStep()">下一步 →</button>
+                </div>
+            </div>
+            
+            <!-- 步骤4: 确认创建 -->
+            <div class="wizard-content" data-content="4" style="display: none;">
+                <div class="confirm-section" style="padding: 24px;">
+                    <div class="confirm-section-title">组合信息</div>
+                    <div class="confirm-row">
+                        <span class="confirm-label">组合名称</span>
+                        <span class="confirm-value" id="confirm-name">我的私募基金组合</span>
+                    </div>
+                    <div class="confirm-row">
+                        <span class="confirm-label">组合类型</span>
+                        <span class="confirm-value">平衡</span>
+                    </div>
+                    <div class="confirm-row">
+                        <span class="confirm-label">初始资金</span>
+                        <span class="confirm-value">1,000 万元</span>
+                    </div>
+                    <div class="confirm-row">
+                        <span class="confirm-label">基准指数</span>
+                        <span class="confirm-value">沪深300指数</span>
+                    </div>
+                </div>
+                
+                <div class="confirm-section" style="padding: 24px;">
+                    <div class="confirm-section-title">持仓配置</div>
+                    <table class="weight-table">
+                        <thead>
+                            <tr>
+                                <th>基金名称</th>
+                                <th>基金代码</th>
+                                <th>权重</th>
+                                <th>类型</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>沪深300ETF</td>
+                                <td>000001</td>
+                                <td>25.0%</td>
+                                <td><span class="tag tag-stock">股票型</span></td>
+                            </tr>
+                            <tr>
+                                <td>中证500ETF</td>
+                                <td>000002</td>
+                                <td>25.0%</td>
+                                <td><span class="tag tag-stock">股票型</span></td>
+                            </tr>
+                            <tr>
+                                <td>纯债基金A</td>
+                                <td>000003</td>
+                                <td>25.0%</td>
+                                <td><span class="tag tag-bond">债券型</span></td>
+                            </tr>
+                            <tr>
+                                <td>灵活配置混合</td>
+                                <td>000004</td>
+                                <td>25.0%</td>
+                                <td><span class="tag tag-mixed">混合型</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="form-actions" style="padding: 24px;">
+                    <button class="btn btn-default" onclick="prevStep()">← 上一步</button>
+                    <button class="btn btn-success" onclick="confirmCreate()">确认创建</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 页面3: 组合详情 -->
+        <div id="page-detail" class="page">
+            <div class="detail-header">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <h1 class="page-title">我的稳健私募基金组合</h1>
+                        <div style="display: flex; gap: 12px; margin-top: 8px;">
+                            <span class="tag tag-balanced">平衡</span>
+                            <span style="color: #666;">创建人: 张三</span>
+                            <span style="color: #666;">成立日期: 2023-01-15</span>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="navigateTo('rebalance')">调仓</button>
+                </div>
+            </div>
+            
+            <div class="overview-cards">
+                <div class="overview-card">
+                    <div class="overview-card-label">最新净值</div>
+                    <div class="overview-card-value">1.2345</div>
+                    <div class="gain">日涨跌 +1.23%</div>
+                </div>
+                <div class="overview-card">
+                    <div class="overview-card-label">成立以来收益</div>
+                    <div class="overview-card-value gain">+23.45%</div>
+                </div>
+                <div class="overview-card">
+                    <div class="overview-card-label">年化收益</div>
+                    <div class="overview-card-value gain">+8.92%</div>
+                </div>
+                <div class="overview-card">
+                    <div class="overview-card-label">最大回撤</div>
+                    <div class="overview-card-value loss">-12.34%</div>
+                </div>
+                <div class="overview-card">
+                    <div class="overview-card-label">夏普比率</div>
+                    <div class="overview-card-value">1.23</div>
+                </div>
+                <div class="overview-card">
+                    <div class="overview-card-label">波动率</div>
+                    <div class="overview-card-value">15.23%</div>
+                </div>
+            </div>
+            
+            <div class="tabs">
+                <div class="tab-item active" data-tab="performance">业绩分析</div>
+                <div class="tab-item" data-tab="holding">持仓明细</div>
+                <div class="tab-item" data-tab="attribution">归因分析</div>
+                <div class="tab-item" data-tab="records">调仓记录</div>
+            </div>
+            
+            <!-- Tab1: 业绩分析 -->
+            <div class="tab-content active" data-tab="performance">
+                <div id="yield-filter-tabs" style="display: flex; gap: 8px; margin-bottom: 16px;">
+                    <button class="filter-tab active" onclick="switchYieldPeriod('1m', this)">近1月</button>
+                    <button class="filter-tab" onclick="switchYieldPeriod('3m', this)">近3月</button>
+                    <button class="filter-tab" onclick="switchYieldPeriod('6m', this)">近6月</button>
+                    <button class="filter-tab" onclick="switchYieldPeriod('1y', this)">近1年</button>
+                    <button class="filter-tab" onclick="switchYieldPeriod('total', this)">成立以来</button>
+                </div>
+                
+                <div class="chart-container">
+                    <div class="chart-title">收益走势</div>
+                    <div style="position: relative; height: 280px; padding: 16px;">
+                        <!-- Y轴标签 -->
+                        <div id="yield-y-axis" style="position: absolute; left: 0; top: 16px; bottom: 40px; width: 50px; display: flex; flex-direction: column; justify-content: space-between; font-size: 12px; color: #999; text-align: right; padding-right: 8px;">
+                            <span>+25%</span>
+                            <span>+20%</span>
+                            <span>+15%</span>
+                            <span>+10%</span>
+                            <span>+5%</span>
+                            <span>0%</span>
+                        </div>
+                        <!-- 图表区域 -->
+                        <div id="yield-chart-area" style="position: absolute; left: 50px; right: 16px; top: 16px; bottom: 40px;">
+                            <!-- 网格线 - 5等分 -->
+                            <div style="position: absolute; left: 0; right: 0; top: 0; height: 1px; border-top: 1px dashed #f0f0f0;"></div>
+                            <div style="position: absolute; left: 0; right: 0; top: 20%; height: 1px; border-top: 1px dashed #f0f0f0;"></div>
+                            <div style="position: absolute; left: 0; right: 0; top: 40%; height: 1px; border-top: 1px dashed #f0f0f0;"></div>
+                            <div style="position: absolute; left: 0; right: 0; top: 60%; height: 1px; border-top: 1px dashed #f0f0f0;"></div>
+                            <div style="position: absolute; left: 0; right: 0; top: 80%; height: 1px; border-top: 1px dashed #f0f0f0;"></div>
+                            <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 1px; border-top: 1px solid #f0f0f0;"></div>
+                            
+                            <!-- 基准线 (虚线) -->
+                            <svg id="benchmark-line" style="position: absolute; width: 100%; height: 100%;" preserveAspectRatio="none">
+                                <polyline id="benchmark-polyline" points="0,184 83,176 166,168 250,160 333,152 416,144 500,136"
+                                    fill="none" stroke="#d9d9d9" stroke-width="2" stroke-dasharray="4,4"/>
+                            </svg>
+                            
+                            <!-- 组合收益线 -->
+                            <svg id="yield-line" style="position: absolute; width: 100%; height: 100%;" preserveAspectRatio="none">
+                                <polyline id="yield-polyline" points="0,184 83,165 166,138 250,115 333,92 416,69 500,46"
+                                    fill="none" stroke="#1890ff" stroke-width="2.5" stroke-linejoin="round"/>
+                                <!-- 数据点 -->
+                                <circle id="yield-point-1" cx="0" cy="184" r="5" fill="#1890ff"/>
+                                <circle id="yield-point-2" cx="83" cy="165" r="4" fill="#1890ff"/>
+                                <circle id="yield-point-3" cx="166" cy="138" r="4" fill="#1890ff"/>
+                                <circle id="yield-point-4" cx="250" cy="115" r="4" fill="#1890ff"/>
+                                <circle id="yield-point-5" cx="333" cy="92" r="4" fill="#1890ff"/>
+                                <circle id="yield-point-6" cx="416" cy="69" r="4" fill="#1890ff"/>
+                                <circle id="yield-point-7" cx="500" cy="46" r="5" fill="#1890ff"/>
+                                <!-- 悬停提示 -->
+                                <rect id="yield-tooltip-bg" x="400" y="-5" width="120" height="55" rx="4" fill="#333"/>
+                                <text id="yield-tooltip-title" x="460" y="12" text-anchor="middle" font-size="11" fill="#999">期末收益率</text>
+                                <text id="yield-tooltip-portfolio" x="410" y="28" text-anchor="start" font-size="11" fill="#1890ff">本组合</text>
+                                <text id="yield-tooltip-portfolio-value" x="510" y="28" text-anchor="end" font-size="12" fill="#1890ff" font-weight="600">+22.00%</text>
+                                <text id="yield-tooltip-benchmark" x="410" y="44" text-anchor="start" font-size="11" fill="#999">基准</text>
+                                <text id="yield-tooltip-benchmark-value" x="510" y="44" text-anchor="end" font-size="12" fill="#999" font-weight="600">+16.00%</text>
+                            </svg>
+                        </div>
+                        <!-- X轴标签 -->
+                        <div id="yield-x-axis" style="position: absolute; left: 50px; right: 16px; bottom: 10px; display: flex; justify-content: space-between; font-size: 12px; color: #999;">
+                            <span>2026-03-30</span>
+                            <span>2026-04-05</span>
+                            <span>2026-04-10</span>
+                            <span>2026-04-15</span>
+                            <span>2026-04-20</span>
+                            <span>2026-04-25</span>
+                            <span>2026-04-30</span>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 24px; margin-top: 16px; justify-content: center;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div style="width: 20px; height: 3px; background: #1890ff;"></div>
+                            <span>本组合收益</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div style="width: 20px; height: 3px; background: #d9d9d9; border-style: dashed;"></div>
+                            <span>基准收益</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 16px;">
+                    <div class="chart-container">
+                        <div class="chart-title">阶段业绩</div>
+                        <table class="data-table" style="border: none; width: 100%;">
+                            <thead>
+                                <tr style="background: #fafafa;">
+                                    <th style="text-align: left; padding: 12px 24px; font-weight: 500; color: #666; border-bottom: 1px solid #f0f0f0;">区间</th>
+                                    <th style="text-align: right; padding: 12px 24px; font-weight: 500; color: #666; border-bottom: 1px solid #f0f0f0;">组合收益</th>
+                                    <th style="text-align: right; padding: 12px 24px; font-weight: 500; color: #666; border-bottom: 1px solid #f0f0f0;">基准收益</th>
+                                    <th style="text-align: right; padding: 12px 24px; font-weight: 500; color: #666; border-bottom: 1px solid #f0f0f0;">超额收益</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style="padding: 12px 24px; border-bottom: 1px solid #f0f0f0;">近1周</td>
+                                    <td style="text-align: right; padding: 12px 24px; border-bottom: 1px solid #f0f0f0;" class="gain">+11.44%</td>
+                                    <td style="text-align: right; padding: 12px 24px; border-bottom: 1px solid #f0f0f0;">+10.23%</td>
+                                    <td style="text-align: right; padding: 12px 24px; border-bottom: 1px solid #f0f0f0;" class="gain">+1.21%</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 12px 24px; border-bottom: 1px solid #f0f0f0;">近1月</td>
+                                    <td style="text-align: right; padding: 12px 24px; border-bottom: 1px solid #f0f0f0;" class="gain">+28.65%</td>
+                                    <td style="text-align: right; padding: 12px 24px; border-bottom: 1px solid #f0f0f0;">+25.12%</td>
+                                    <td style="text-align: right; padding: 12px 24px; border-bottom: 1px solid #f0f0f0;" class="gain">+3.53%</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 12px 24px; border-bottom: 1px solid #f0f0f0;">近1季</td>
+                                    <td style="text-align: right; padding: 12px 24px; border-bottom: 1px solid #f0f0f0;" class="gain">+16.78%</td>
+                                    <td style="text-align: right; padding: 12px 24px; border-bottom: 1px solid #f0f0f0;">+14.56%</td>
+                                    <td style="text-align: right; padding: 12px 24px; border-bottom: 1px solid #f0f0f0;" class="gain">+2.22%</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 12px 24px; border-bottom: 1px solid #f0f0f0;">近1年</td>
+                                    <td style="text-align: right; padding: 12px 24px; border-bottom: 1px solid #f0f0f0;" class="gain">+25.63%</td>
+                                    <td style="text-align: right; padding: 12px 24px; border-bottom: 1px solid #f0f0f0;">+20.45%</td>
+                                    <td style="text-align: right; padding: 12px 24px; border-bottom: 1px solid #f0f0f0;" class="gain">+5.18%</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 12px 24px; border-bottom: 1px solid #f0f0f0;">今年</td>
+                                    <td style="text-align: right; padding: 12px 24px; border-bottom: 1px solid #f0f0f0;" class="gain">+29.37%</td>
+                                    <td style="text-align: right; padding: 12px 24px; border-bottom: 1px solid #f0f0f0;">+24.18%</td>
+                                    <td style="text-align: right; padding: 12px 24px; border-bottom: 1px solid #f0f0f0;" class="gain">+5.19%</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 12px 24px;">创建以来</td>
+                                    <td style="text-align: right; padding: 12px 24px;" class="gain">+25.63%</td>
+                                    <td style="text-align: right; padding: 12px 24px;">+20.45%</td>
+                                    <td style="text-align: right; padding: 12px 24px;" class="gain">+5.18%</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <div class="chart-title" style="margin-bottom: 0;">风险指标</div>
+                            <div id="risk-filter-tabs" style="display: flex; gap: 4px;">
+                                <button class="filter-tab active" style="padding: 3px 10px; font-size: 11px;" onclick="switchRiskPeriod('1y')">近一年</button>
+                                <button class="filter-tab" style="padding: 3px 10px; font-size: 11px;" onclick="switchRiskPeriod('3y')">近三年</button>
+                                <button class="filter-tab" style="padding: 3px 10px; font-size: 11px;" onclick="switchRiskPeriod('5y')">近五年</button>
+                            </div>
+                        </div>
+                        <table class="data-table" style="border: none; width: 100%;">
+                            <thead>
+                                <tr style="background: #fafafa;">
+                                    <th style="text-align: left; padding: 12px 24px; font-weight: 500; color: #666; border-bottom: 1px solid #f0f0f0;">指标</th>
+                                    <th style="text-align: right; padding: 12px 24px; font-weight: 500; color: #666; border-bottom: 1px solid #f0f0f0;">数值</th>
+                                </tr>
+                            </thead>
+                            <tbody id="risk-tbody">
+                                <tr>
+                                    <td style="padding: 12px 24px; border-bottom: 1px solid #f0f0f0;">波动率</td>
+                                    <td style="text-align: right; padding: 12px 24px; border-bottom: 1px solid #f0f0f0;" class="risk-value" data-key="volatility">15.23%</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 12px 24px; border-bottom: 1px solid #f0f0f0;">最大回撤</td>
+                                    <td style="text-align: right; padding: 12px 24px; border-bottom: 1px solid #f0f0f0;" class="risk-value loss" data-key="maxDrawdown">-12.34%</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 12px 24px; border-bottom: 1px solid #f0f0f0;">VaR(95%)</td>
+                                    <td style="text-align: right; padding: 12px 24px; border-bottom: 1px solid #f0f0f0;" class="risk-value loss" data-key="var">-2.1%</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 12px 24px; border-bottom: 1px solid #f0f0f0;">夏普比率</td>
+                                    <td style="text-align: right; padding: 12px 24px; border-bottom: 1px solid #f0f0f0;" class="risk-value" data-key="sharpe">1.23</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 12px 24px; border-bottom: 1px solid #f0f0f0;">阿尔法</td>
+                                    <td style="text-align: right; padding: 12px 24px; border-bottom: 1px solid #f0f0f0;" class="risk-value gain" data-key="alpha">+3.21%</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 12px 24px;">贝塔</td>
+                                    <td style="text-align: right; padding: 12px 24px;" class="risk-value" data-key="beta">0.85</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tab2: 持仓明细 -->
+            <div class="tab-content" data-tab="holding">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <div style="color: #666;">数据日期: 2024-01-15</div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn btn-default">下载持仓</button>
+                        <button class="btn btn-default">导出报表</button>
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                    <div class="chart-container">
+                        <div class="chart-title">资产配置</div>
+                        <div style="display: flex; align-items: center; gap: 24px; padding: 16px;">
+                            <!-- 饼图 -->
+                            <svg width="160" height="160" viewBox="0 0 160 160">
+                                <!-- 股票型 40% (0-144度) -->
+                                <circle cx="80" cy="80" r="60" fill="transparent" stroke="#cf1322" stroke-width="40" 
+                                    stroke-dasharray="150.8 376.99" stroke-dashoffset="94.25" transform="rotate(-90 80 80)"/>
+                                <!-- 债券型 30% (144-252度) -->
+                                <circle cx="80" cy="80" r="60" fill="transparent" stroke="#389e0d" stroke-width="40" 
+                                    stroke-dasharray="113.1 376.99" stroke-dashoffset="-56.55" transform="rotate(-90 80 80)"/>
+                                <!-- 混合型 20% (252-324度) -->
+                                <circle cx="80" cy="80" r="60" fill="transparent" stroke="#d46b08" stroke-width="40" 
+                                    stroke-dasharray="75.4 376.99" stroke-dashoffset="-169.65" transform="rotate(-90 80 80)"/>
+                                <!-- 现金 10% (324-360度) -->
+                                <circle cx="80" cy="80" r="60" fill="transparent" stroke="#096dd9" stroke-width="40" 
+                                    stroke-dasharray="37.7 376.99" stroke-dashoffset="-245.05" transform="rotate(-90 80 80)"/>
+                                <!-- 中心白色 -->
+                                <circle cx="80" cy="80" r="45" fill="white"/>
+                                <text x="80" y="76" text-anchor="middle" font-size="14" fill="#666">总资产</text>
+                                <text x="80" y="94" text-anchor="middle" font-size="14" font-weight="600" fill="#333">100%</text>
+                            </svg>
+                            <!-- 图例 -->
+                            <div style="flex: 1;">
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                                    <div style="width: 14px; height: 14px; background: #cf1322; border-radius: 2px;"></div>
+                                    <span style="flex: 1;">股票型</span>
+                                    <span style="font-weight: 600;">40%</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                                    <div style="width: 14px; height: 14px; background: #389e0d; border-radius: 2px;"></div>
+                                    <span style="flex: 1;">债券型</span>
+                                    <span style="font-weight: 600;">30%</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                                    <div style="width: 14px; height: 14px; background: #d46b08; border-radius: 2px;"></div>
+                                    <span style="flex: 1;">混合型</span>
+                                    <span style="font-weight: 600;">20%</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <div style="width: 14px; height: 14px; background: #096dd9; border-radius: 2px;"></div>
+                                    <span style="flex: 1;">现金</span>
+                                    <span style="font-weight: 600;">10%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <div class="chart-title">基金类型分布</div>
+                        <div style="padding: 16px;">
+                            <div style="margin-bottom: 10px; display: flex; align-items: center; gap: 12px;">
+                                <span style="width: 100px; font-size: 13px;">主观多头</span>
+                                <div style="flex: 1; height: 18px; background: #f0f0f0; border-radius: 4px; overflow: hidden;">
+                                    <div style="width: 58%; height: 100%; background: linear-gradient(90deg, #1890ff, #40a9ff);"></div>
+                                </div>
+                                <span style="font-weight: 600; width: 40px; text-align: right;">58%</span>
+                            </div>
+                            <div style="margin-bottom: 10px; display: flex; align-items: center; gap: 12px;">
+                                <span style="width: 100px; font-size: 13px;">量化多头</span>
+                                <div style="flex: 1; height: 18px; background: #f0f0f0; border-radius: 4px; overflow: hidden;">
+                                    <div style="width: 10%; height: 100%; background: #52c41a;"></div>
+                                </div>
+                                <span style="font-weight: 600; width: 40px; text-align: right;">10%</span>
+                            </div>
+                            <div style="margin-bottom: 10px; display: flex; align-items: center; gap: 12px;">
+                                <span style="width: 100px; font-size: 13px;">股票多空</span>
+                                <div style="flex: 1; height: 18px; background: #f0f0f0; border-radius: 4px; overflow: hidden;">
+                                    <div style="width: 10%; height: 100%; background: #faad14;"></div>
+                                </div>
+                                <span style="font-weight: 600; width: 40px; text-align: right;">10%</span>
+                            </div>
+                            <div style="margin-bottom: 10px; display: flex; align-items: center; gap: 12px;">
+                                <span style="width: 100px; font-size: 13px;">股票市场中性</span>
+                                <div style="flex: 1; height: 18px; background: #f0f0f0; border-radius: 4px; overflow: hidden;">
+                                    <div style="width: 8%; height: 100%; background: #d46b08;"></div>
+                                </div>
+                                <span style="font-weight: 600; width: 40px; text-align: right;">8%</span>
+                            </div>
+                            <div style="margin-bottom: 10px; display: flex; align-items: center; gap: 12px;">
+                                <span style="width: 100px; font-size: 13px;">事件驱动</span>
+                                <div style="flex: 1; height: 18px; background: #f0f0f0; border-radius: 4px; overflow: hidden;">
+                                    <div style="width: 7%; height: 100%; background: #722ed1;"></div>
+                                </div>
+                                <span style="font-weight: 600; width: 40px; text-align: right;">7%</span>
+                            </div>
+                            <div style="margin-bottom: 10px; display: flex; align-items: center; gap: 12px;">
+                                <span style="width: 100px; font-size: 13px;">指数增强</span>
+                                <div style="flex: 1; height: 18px; background: #f0f0f0; border-radius: 4px; overflow: hidden;">
+                                    <div style="width: 5%; height: 100%; background: #eb2f96;"></div>
+                                </div>
+                                <span style="font-weight: 600; width: 40px; text-align: right;">5%</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <span style="width: 100px; font-size: 13px;">其他</span>
+                                <div style="flex: 1; height: 18px; background: #f0f0f0; border-radius: 4px; overflow: hidden;">
+                                    <div style="width: 2%; height: 100%; background: #8c8c8c;"></div>
+                                </div>
+                                <span style="font-weight: 600; width: 40px; text-align: right;">2%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="data-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>序号</th>
+                                <th>基金名称</th>
+                                <th>代码</th>
+                                <th>权重</th>
+                                <th>持仓周期</th>
+                                <th>持仓成本（元）</th>
+                                <th>持仓市值（元）</th>
+                                <th>持仓收益额（元）</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1</td>
+                                <td>准锦至臻一号A类份额</td>
+                                <td>000001</td>
+                                <td>15.0%</td>
+                                <td>365天</td>
+                                <td>130,200.00</td>
+                                <td>150,000.00</td>
+                                <td class="gain">+19,800.00</td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td>高易青城</td>
+                                <td>000002</td>
+                                <td>12.0%</td>
+                                <td>280天</td>
+                                <td>101,280.00</td>
+                                <td>120,000.00</td>
+                                <td class="gain">+18,720.00</td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td>久期宏观多策略2号A类份额</td>
+                                <td>000003</td>
+                                <td>12.0%</td>
+                                <td>520天</td>
+                                <td>110,640.00</td>
+                                <td>120,000.00</td>
+                                <td class="gain">+9,360.00</td>
+                            </tr>
+                            <tr>
+                                <td>4</td>
+                                <td>止于至善价值投资4号</td>
+                                <td>000004</td>
+                                <td>10.0%</td>
+                                <td>410天</td>
+                                <td>90,920.00</td>
+                                <td>100,000.00</td>
+                                <td class="gain">+9,080.00</td>
+                            </tr>
+                            <tr>
+                                <td>5</td>
+                                <td>巴道轩二号A类份额</td>
+                                <td>000005</td>
+                                <td>8.0%</td>
+                                <td>180天</td>
+                                <td>79,296.00</td>
+                                <td>80,000.00</td>
+                                <td class="gain">+704.00</td>
+                            </tr>
+                            <tr>
+                                <td>6</td>
+                                <td>巴道轩一号A类份额</td>
+                                <td>000006</td>
+                                <td>10.0%</td>
+                                <td>320天</td>
+                                <td>81,800.00</td>
+                                <td>100,000.00</td>
+                                <td class="gain">+18,200.00</td>
+                            </tr>
+                            <tr>
+                                <td>7</td>
+                                <td>子衿璀璨1号B类份额</td>
+                                <td>000007</td>
+                                <td>8.0%</td>
+                                <td>295天</td>
+                                <td>66,800.00</td>
+                                <td>80,000.00</td>
+                                <td class="gain">+13,200.00</td>
+                            </tr>
+                            <tr>
+                                <td>8</td>
+                                <td>深圳德鸿国企混改价值1号</td>
+                                <td>000008</td>
+                                <td>8.0%</td>
+                                <td>450天</td>
+                                <td>74,880.00</td>
+                                <td>80,000.00</td>
+                                <td class="gain">+5,120.00</td>
+                            </tr>
+                            <tr>
+                                <td>9</td>
+                                <td>久期宏观多策略3号A类份额</td>
+                                <td>000009</td>
+                                <td>7.0%</td>
+                                <td>380天</td>
+                                <td>62,230.00</td>
+                                <td>70,000.00</td>
+                                <td class="gain">+7,770.00</td>
+                            </tr>
+                            <tr>
+                                <td>10</td>
+                                <td>蚂金青山进取一号</td>
+                                <td>000010</td>
+                                <td>6.0%</td>
+                                <td>340天</td>
+                                <td>54,600.00</td>
+                                <td>60,000.00</td>
+                                <td class="gain">+5,400.00</td>
+                            </tr>
+                            <tr>
+                                <td>11</td>
+                                <td>领久恒峰</td>
+                                <td>000011</td>
+                                <td>4.0%</td>
+                                <td>200天</td>
+                                <td>38,640.00</td>
+                                <td>40,000.00</td>
+                                <td class="gain">+1,360.00</td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr style="font-weight: 600; background: #fafafa;">
+                                <td colspan="3">合计</td>
+                                <td>100.0%</td>
+                                <td>-</td>
+                                <td>891,286.00</td>
+                                <td>1,000,000.00</td>
+                                <td class="gain">+108,714.00</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Tab3: 归因分析 -->
+            <div class="tab-content" data-tab="attribution">
+                <div class="chart-title" style="margin-bottom: 16px;">Brinson归因分析 - 收益分解</div>
+                
+                <div class="attribution-summary">
+                    <div class="attribution-total">总超额收益: +5.41%</div>
+                    <div class="attribution-breakdown">
+                        <div class="attribution-item">
+                            <div class="attribution-item-label">资产配置效应</div>
+                            <div class="attribution-item-value">+0.53%</div>
+                        </div>
+                        <div class="attribution-item">
+                            <div class="attribution-item-label">基金选择效应</div>
+                            <div class="attribution-item-value">+1.88%</div>
+                        </div>
+                        <div class="attribution-item">
+                            <div class="attribution-item-label">交互效应</div>
+                            <div class="attribution-item-value">+3.00%</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="data-table" style="margin-bottom: 24px;">
+                    <div style="padding: 16px; font-weight: 600; background: #fafafa;">Brinson归因分析 - 大类资产归因</div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>资产类别</th>
+                                <th>组合权重</th>
+                                <th>基准权重</th>
+                                <th>超额配置</th>
+                                <th>贡献</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>主观多头</td>
+                                <td>40.0%</td>
+                                <td>35.0%</td>
+                                <td class="gain">+5.0%</td>
+                                <td class="gain">+0.85%</td>
+                            </tr>
+                            <tr>
+                                <td>量化多头</td>
+                                <td>20.0%</td>
+                                <td>15.0%</td>
+                                <td class="gain">+5.0%</td>
+                                <td class="gain">+0.68%</td>
+                            </tr>
+                            <tr>
+                                <td>股票多空</td>
+                                <td>15.0%</td>
+                                <td>20.0%</td>
+                                <td class="loss">-5.0%</td>
+                                <td class="loss">-0.32%</td>
+                            </tr>
+                            <tr>
+                                <td>股票市场中性</td>
+                                <td>10.0%</td>
+                                <td>10.0%</td>
+                                <td>0.0%</td>
+                                <td>0.00%</td>
+                            </tr>
+                            <tr>
+                                <td>指数增强</td>
+                                <td>10.0%</td>
+                                <td>15.0%</td>
+                                <td class="loss">-5.0%</td>
+                                <td class="loss">-0.45%</td>
+                            </tr>
+                            <tr>
+                                <td>其他</td>
+                                <td>5.0%</td>
+                                <td>5.0%</td>
+                                <td>0.0%</td>
+                                <td>0.00%</td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr style="font-weight: 600; background: #fafafa;">
+                                <td>合计</td>
+                                <td>100.0%</td>
+                                <td>100.0%</td>
+                                <td>-</td>
+                                <td class="gain">+0.76%</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                
+                <div class="data-table">
+                    <div style="padding: 16px; font-weight: 600; background: #fafafa;">Brinson归因分析 - 基金明细归因</div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>基金名称</th>
+                                <th>组合收益</th>
+                                <th>基准收益</th>
+                                <th>超额收益</th>
+                                <th>贡献</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>准锦至臻一号A类份额</td>
+                                <td class="gain">+15.2%</td>
+                                <td>+12.0%</td>
+                                <td class="gain">+3.2%</td>
+                                <td class="gain">+0.48%</td>
+                            </tr>
+                            <tr>
+                                <td>高易青城</td>
+                                <td class="gain">+18.5%</td>
+                                <td>+14.5%</td>
+                                <td class="gain">+4.0%</td>
+                                <td class="gain">+0.48%</td>
+                            </tr>
+                            <tr>
+                                <td>久期宏观多策略2号A类份额</td>
+                                <td class="gain">+8.5%</td>
+                                <td>+7.0%</td>
+                                <td class="gain">+1.5%</td>
+                                <td class="gain">+0.18%</td>
+                            </tr>
+                            <tr>
+                                <td>止于至善价值投资4号</td>
+                                <td class="gain">+10.1%</td>
+                                <td>+9.5%</td>
+                                <td class="gain">+0.6%</td>
+                                <td class="gain">+0.06%</td>
+                            </tr>
+                            <tr>
+                                <td>巴道轩二号A类份额</td>
+                                <td class="gain">+0.9%</td>
+                                <td>+0.8%</td>
+                                <td class="gain">+0.1%</td>
+                                <td class="gain">+0.01%</td>
+                            </tr>
+                            <tr>
+                                <td>巴道轩一号A类份额</td>
+                                <td class="gain">+22.3%</td>
+                                <td>+18.0%</td>
+                                <td class="gain">+4.3%</td>
+                                <td class="gain">+0.43%</td>
+                            </tr>
+                            <tr>
+                                <td>子衿璀璨1号B类份额</td>
+                                <td class="gain">+19.8%</td>
+                                <td>+16.5%</td>
+                                <td class="gain">+3.3%</td>
+                                <td class="gain">+0.26%</td>
+                            </tr>
+                            <tr>
+                                <td>深圳德鸿国企混改价值1号</td>
+                                <td class="gain">+6.9%</td>
+                                <td>+5.5%</td>
+                                <td class="gain">+1.4%</td>
+                                <td class="gain">+0.11%</td>
+                            </tr>
+                            <tr>
+                                <td>久期宏观多策略3号A类份额</td>
+                                <td class="gain">+12.5%</td>
+                                <td>+10.0%</td>
+                                <td class="gain">+2.5%</td>
+                                <td class="gain">+0.18%</td>
+                            </tr>
+                            <tr>
+                                <td>蚂金青山进取一号</td>
+                                <td class="gain">+9.9%</td>
+                                <td>+8.5%</td>
+                                <td class="gain">+1.4%</td>
+                                <td class="gain">+0.08%</td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr style="font-weight: 600; background: #fafafa;">
+                                <td>合计</td>
+                                <td>-</td>
+                                <td>-</td>
+                                <td>-</td>
+                                <td class="gain">+2.27%</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Tab4: 调仓记录 -->
+            <div class="tab-content" data-tab="records">
+                <div style="display: flex; justify-content: flex-end; margin-bottom: 16px;">
+                    <button class="btn btn-default">导出记录</button>
+                </div>
+                
+                <div class="data-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>调仓日期</th>
+                                <th>方向</th>
+                                <th>基金名称</th>
+                                <th>调整前权重</th>
+                                <th>调整后权重</th>
+                                <th>变动</th>
+                                <th>调仓原因</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>2024-01-15</td>
+                                <td><span class="tag" style="background: #f6ffed; color: #389e0d;">减仓</span></td>
+                                <td>准锦至臻一号A类份额</td>
+                                <td>30.0%</td>
+                                <td>25.0%</td>
+                                <td class="loss">-5.0%</td>
+                                <td>季度再平衡</td>
+                            </tr>
+                            <tr>
+                                <td>2024-01-15</td>
+                                <td><span class="tag" style="background: #f6ffed; color: #389e0d;">减仓</span></td>
+                                <td>止于至善价值投资4号</td>
+                                <td>25.0%</td>
+                                <td>20.0%</td>
+                                <td class="loss">-5.0%</td>
+                                <td>季度再平衡</td>
+                            </tr>
+                            <tr>
+                                <td>2024-01-15</td>
+                                <td><span class="tag" style="background: #fff1f0; color: #cf1322;">加仓</span></td>
+                                <td>高易青城</td>
+                                <td>0.0%</td>
+                                <td>10.0%</td>
+                                <td class="gain">+10.0%</td>
+                                <td>季度再平衡</td>
+                            </tr>
+                            <tr>
+                                <td>2023-10-15</td>
+                                <td><span class="tag" style="background: #f6ffed; color: #389e0d;">减仓</span></td>
+                                <td>准锦至臻一号A类份额</td>
+                                <td>35.0%</td>
+                                <td>30.0%</td>
+                                <td class="loss">-5.0%</td>
+                                <td>季度再平衡</td>
+                            </tr>
+                            <tr>
+                                <td>2023-10-15</td>
+                                <td><span class="tag" style="background: #fff1f0; color: #cf1322;">加仓</span></td>
+                                <td>久期宏观多策略2号A类份额</td>
+                                <td>20.0%</td>
+                                <td>25.0%</td>
+                                <td class="gain">+5.0%</td>
+                                <td>季度再平衡</td>
+                            </tr>
+                            <tr>
+                                <td>2023-07-15</td>
+                                <td><span class="tag" style="background: #fff1f0; color: #cf1322;">加仓</span></td>
+                                <td>准锦至臻一号A类份额</td>
+                                <td>25.0%</td>
+                                <td>35.0%</td>
+                                <td class="gain">+10.0%</td>
+                                <td>止盈调整</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 页面4: 组合调仓 -->
+        <div id="page-rebalance" class="page">
+            <div class="rebalance-page">
+                <div class="rebalance-header">
+                    <h2>组合调仓</h2>
+                    <div style="color: #666;">
+                        组合: 我的稳健私募基金 &nbsp;|&nbsp; 当前净值: 1.2345 &nbsp;|&nbsp; 调仓日期: 2026-05-26
+                    </div>
+                </div>
+                
+                <div style="display: flex; justify-content: flex-end; margin-bottom: 16px;">
+                    <button class="btn btn-default" onclick="showAddFundModal()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px;">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        添加基金
+                    </button>
+                </div>
+                
+                <div class="data-table" style="margin-bottom: 24px;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 40px;">序号</th>
+                                <th>基金名称</th>
+                                <th>基金代码</th>
+                                <th style="width: 120px;">当前仓位</th>
+                                <th style="width: 150px;">目标仓位</th>
+                                <th>调仓理由</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1</td>
+                                <td>准锦至臻一号A类份额</td>
+                                <td>000001</td>
+                                <td style="text-align: center;">30.0%</td>
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: 4px;">
+                                        <input type="number" class="weight-input" value="25" min="0" max="100" style="width: 80px; text-align: center;" onchange="calculateChange(this)">
+                                        <span>%</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <input type="text" class="form-input" placeholder="请输入调仓理由" style="padding: 4px 8px; font-size: 13px;">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td>久期宏观多策略2号A类份额</td>
+                                <td>000002</td>
+                                <td style="text-align: center;">25.0%</td>
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: 4px;">
+                                        <input type="number" class="weight-input" value="25" min="0" max="100" style="width: 80px; text-align: center;" onchange="calculateChange(this)">
+                                        <span>%</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <input type="text" class="form-input" placeholder="请输入调仓理由" style="padding: 4px 8px; font-size: 13px;">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td>止于至善价值投资4号</td>
+                                <td>000003</td>
+                                <td style="text-align: center;">25.0%</td>
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: 4px;">
+                                        <input type="number" class="weight-input" value="20" min="0" max="100" style="width: 80px; text-align: center;" onchange="calculateChange(this)">
+                                        <span>%</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <input type="text" class="form-input" placeholder="请输入调仓理由" style="padding: 4px 8px; font-size: 13px;">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>4</td>
+                                <td>巴道轩二号A类份额</td>
+                                <td>000004</td>
+                                <td style="text-align: center;">20.0%</td>
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: 4px;">
+                                        <input type="number" class="weight-input" value="20" min="0" max="100" style="width: 80px; text-align: center;" onchange="calculateChange(this)">
+                                        <span>%</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <input type="text" class="form-input" placeholder="请输入调仓理由" style="padding: 4px 8px; font-size: 13px;">
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr style="font-weight: 600; background: #fafafa;">
+                                <td colspan="3" style="text-align: right;">合计</td>
+                                <td style="text-align: center;">100%</td>
+                                <td style="text-align: center;" id="target-total">90%</td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                
+                <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+                    <button class="btn btn-default" onclick="navigateTo('detail')">取消</button>
+                    <button class="btn btn-success" onclick="executeRebalance()">确认调仓</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 添加基金弹窗 -->
+    <div class="modal" id="add-fund-modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h3>搜索添加基金</h3>
+                <span class="modal-close" onclick="closeAddFundModal()">×</span>
+            </div>
+            <div class="modal-body">
+                <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+                    <select style="padding: 8px 12px; border: 1px solid #d9d9d9; border-radius: 4px;">
+                        <option>全部类型</option>
+                        <option>股票型</option>
+                        <option>债券型</option>
+                        <option>混合型</option>
+                        <option>指数型</option>
+                    </select>
+                    <input type="text" placeholder="搜索基金名称/代码" style="flex:1;padding:8px 12px;border:1px solid #d9d9d9;border-radius:4px;">
+                    <button class="btn btn-primary">搜索</button>
+                </div>
+                <div class="fund-list" style="max-height: 300px; overflow-y: auto; border: 1px solid #f0f0f0; border-radius: 4px;">
+                    <div class="fund-list-item" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #f0f0f0; cursor: pointer;" onclick="selectFund(this, '准锦至臻一号A类份额', '000001')">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <input type="checkbox" id="fund-000001">
+                            <div>
+                                <div style="font-weight: 500;">准锦至臻一号A类份额</div>
+                                <div style="font-size: 12px; color: #666;">000001 | 主观多头</div>
+                            </div>
+                        </div>
+                        <span style="color: #1890ff; font-size: 20px;">+</span>
+                    </div>
+                    <div class="fund-list-item" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #f0f0f0; cursor: pointer;" onclick="selectFund(this, '高易青城', '000002')">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <input type="checkbox" id="fund-000002">
+                            <div>
+                                <div style="font-weight: 500;">高易青城</div>
+                                <div style="font-size: 12px; color: #666;">000002 | 主观多头</div>
+                            </div>
+                        </div>
+                        <span style="color: #1890ff; font-size: 20px;">+</span>
+                    </div>
+                    <div class="fund-list-item" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #f0f0f0; cursor: pointer;" onclick="selectFund(this, '久期宏观多策略2号A类份额', '000003')">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <input type="checkbox" id="fund-000003">
+                            <div>
+                                <div style="font-weight: 500;">久期宏观多策略2号A类份额</div>
+                                <div style="font-size: 12px; color: #666;">000003 | 宏观策略</div>
+                            </div>
+                        </div>
+                        <span style="color: #1890ff; font-size: 20px;">+</span>
+                    </div>
+                    <div class="fund-list-item" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #f0f0f0; cursor: pointer;" onclick="selectFund(this, '止于至善价值投资4号', '000004')">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <input type="checkbox" id="fund-000004">
+                            <div>
+                                <div style="font-weight: 500;">止于至善价值投资4号</div>
+                                <div style="font-size: 12px; color: #666;">000004 | 主观多头</div>
+                            </div>
+                        </div>
+                        <span style="color: #1890ff; font-size: 20px;">+</span>
+                    </div>
+                    <div class="fund-list-item" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #f0f0f0; cursor: pointer;" onclick="selectFund(this, '巴道轩二号A类份额', '000005')">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <input type="checkbox" id="fund-000005">
+                            <div>
+                                <div style="font-weight: 500;">巴道轩二号A类份额</div>
+                                <div style="font-size: 12px; color: #666;">000005 | 主观多头</div>
+                            </div>
+                        </div>
+                        <span style="color: #1890ff; font-size: 20px;">+</span>
+                    </div>
+                    <div class="fund-list-item" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #f0f0f0; cursor: pointer;" onclick="selectFund(this, '巴道轩一号A类份额', '000006')">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <input type="checkbox" id="fund-000006">
+                            <div>
+                                <div style="font-weight: 500;">巴道轩一号A类份额</div>
+                                <div style="font-size: 12px; color: #666;">000006 | 主观多头</div>
+                            </div>
+                        </div>
+                        <span style="color: #1890ff; font-size: 20px;">+</span>
+                    </div>
+                    <div class="fund-list-item" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; cursor: pointer;" onclick="selectFund(this, '子衿璀璨1号B类份额', '000007')">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <input type="checkbox" id="fund-000007">
+                            <div>
+                                <div style="font-weight: 500;">子衿璀璨1号B类份额</div>
+                                <div style="font-size: 12px; color: #666;">000007 | 主观多头</div>
+                            </div>
+                        </div>
+                        <span style="color: #1890ff; font-size: 20px;">+</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-default" onclick="closeAddFundModal()">取消</button>
+                <button class="btn btn-primary" onclick="confirmAddFunds()">确认添加</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 弹窗 -->
+    <div class="modal" id="preview-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>调仓预览</h3>
+                <span class="modal-close" onclick="closeModal()">×</span>
+            </div>
+            <div class="modal-body">
+                <h4 style="margin-bottom: 16px;">调仓前后对比</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                    <div style="background: #f5f5f5; padding: 16px; border-radius: 8px; text-align: center;">
+                        <div style="color: #666; margin-bottom: 8px;">调仓前</div>
+                        <div style="font-size: 24px; font-weight: 600;">100%</div>
+                    </div>
+                    <div style="background: #e6f7ff; padding: 16px; border-radius: 8px; text-align: center;">
+                        <div style="color: #666; margin-bottom: 8px;">调仓后</div>
+                        <div style="font-size: 24px; font-weight: 600;">90%</div>
+                    </div>
+                </div>
+                <div style="background: #fafafa; padding: 16px; border-radius: 8px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span>预计交易成本</span>
+                        <span style="font-weight: 600;">¥1,234.56</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>预计调仓时间</span>
+                        <span style="font-weight: 600;">1-2个工作日</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-default" onclick="closeModal()">取消</button>
+                <button class="btn btn-success" onclick="executeRebalance()">确认执行调仓</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+    
+    <script>
+        // 页面导航
+        function navigateTo(page) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('page-' + page).classList.add('active');
+            
+            document.querySelectorAll('.navbar-links a').forEach(a => a.classList.remove('active'));
+            document.querySelector(`.navbar-links a[data-page="${page}"]`).classList.add('active');
+            
+            window.scrollTo(0, 0);
+        }
+        
+        document.querySelectorAll('.navbar-links a').forEach(a => {
+            a.addEventListener('click', () => navigateTo(a.dataset.page));
+        });
+        
+        // 向导步骤
+        let currentStep = 1;
+        
+        function updateWizardSteps() {
+            document.querySelectorAll('.wizard-step').forEach(step => {
+                const stepNum = parseInt(step.dataset.step);
+                step.classList.remove('active', 'completed');
+                if (stepNum < currentStep) {
+                    step.classList.add('completed');
+                } else if (stepNum === currentStep) {
+                    step.classList.add('active');
+                }
+            });
+            
+            document.querySelectorAll('.wizard-content').forEach(content => {
+                content.style.display = 'none';
+            });
+            document.querySelector(`.wizard-content[data-content="${currentStep}"]`).style.display = 'block';
+        }
+        
+        function nextStep() {
+            if (currentStep < 4) {
+                currentStep++;
+                updateWizardSteps();
+            }
+        }
+        
+        function prevStep() {
+            if (currentStep > 1) {
+                currentStep--;
+                updateWizardSteps();
+            }
+        }
+        
+        // 已选基金
+        let selectedFunds = [];
+        
+        function addFund(element, name, code) {
+            if (selectedFunds.find(f => f.code === code)) {
+                showToast('该基金已添加');
+                return;
+            }
+            selectedFunds.push({ name, code, type: '股票型' });
+            updateSelectedFunds();
+            element.style.background = '#e6f7ff';
+            showToast(`已添加 ${name}`);
+        }
+        
+        function removeFund(code) {
+            selectedFunds = selectedFunds.filter(f => f.code !== code);
+            updateSelectedFunds();
+        }
+        
+        function updateSelectedFunds() {
+            const container = document.getElementById('selected-funds-list');
+            const count = document.getElementById('selected-count');
+            count.textContent = selectedFunds.length;
+            
+            if (selectedFunds.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; color: #999; padding: 40px;">
+                        尚未选择基金<br><small>点击左侧 + 号添加</small>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = selectedFunds.map(f => `
+                    <div class="fund-item">
+                        <div class="fund-item-info">
+                            <div class="fund-item-name">${f.name}</div>
+                            <div class="fund-item-type">${f.code} | ${f.type}</div>
+                        </div>
+                        <span class="fund-item-remove" onclick="removeFund('${f.code}')">×</span>
+                    </div>
+                `).join('');
+            }
+        }
+        
+        // 权重计算
+        function updateWeightTotal() {
+            const inputs = document.querySelectorAll('#weight-funds-body .weight-input');
+            let total = 0;
+            inputs.forEach(input => {
+                total += parseFloat(input.value) || 0;
+            });
+            document.getElementById('weight-total').textContent = total.toFixed(1) + '%';
+        }
+        
+        function removeWeightFund(btn) {
+            const row = btn.closest('tr');
+            row.remove();
+            updateWeightTotal();
+        }
+        
+        // Tab切换
+        document.querySelectorAll('.tab-item').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.querySelector(`.tab-content[data-tab="${tab.dataset.tab}"]`).classList.add('active');
+            });
+        });
+        
+        // 筛选标签
+        document.querySelectorAll('.filter-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const parent = tab.closest('.filter-tabs');
+                parent.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+            });
+        });
+        
+        // 弹窗
+        function showPreview() {
+            document.getElementById('preview-modal').classList.add('show');
+        }
+        
+        function closeModal() {
+            document.getElementById('preview-modal').classList.remove('show');
+        }
+        
+        // 添加基金弹窗
+        function showAddFundModal() {
+            document.getElementById('add-fund-modal').classList.add('show');
+        }
+        
+        function closeAddFundModal() {
+            document.getElementById('add-fund-modal').classList.remove('show');
+        }
+        
+        let selectedFundsToAdd = [];
+        
+        function selectFund(element, name, code) {
+            const checkbox = element.querySelector('input[type="checkbox"]');
+            checkbox.checked = !checkbox.checked;
+            
+            if (checkbox.checked) {
+                if (!selectedFundsToAdd.find(f => f.code === code)) {
+                    selectedFundsToAdd.push({ name, code });
+                }
+                element.style.background = '#e6f7ff';
+            } else {
+                selectedFundsToAdd = selectedFundsToAdd.filter(f => f.code !== code);
+                element.style.background = '';
+            }
+        }
+        
+        function confirmAddFunds() {
+            if (selectedFundsToAdd.length === 0) {
+                showToast('请选择要添加的基金');
+                return;
+            }
+            showToast(`已添加 ${selectedFundsToAdd.length} 只基金`);
+            closeAddFundModal();
+            selectedFundsToAdd = [];
+            // 重置所有复选框
+            document.querySelectorAll('#add-fund-modal input[type="checkbox"]').forEach(cb => {
+                cb.checked = false;
+            });
+            document.querySelectorAll('#add-fund-modal .fund-list-item').forEach(item => {
+                item.style.background = '';
+            });
+        }
+        
+        // 计算目标仓位合计
+        function calculateChange(input) {
+            // 获取所有目标仓位输入
+            const inputs = document.querySelectorAll('#page-rebalance .weight-input');
+            let total = 0;
+            inputs.forEach(inp => {
+                const val = parseFloat(inp.value) || 0;
+                total += val;
+            });
+            // 更新合计显示
+            const totalEl = document.getElementById('target-total');
+            if (totalEl) {
+                totalEl.textContent = total.toFixed(1) + '%';
+                totalEl.style.color = total !== 100 ? '#faad14' : '#52c41a';
+            }
+        }
+        
+        // 页面加载时初始化计算
+        window.addEventListener('load', function() {
+            calculateChange();
+        });
+        
+        // 执行调仓
+        function executeRebalance() {
+            closeModal();
+            showToast('调仓指令已提交');
+            setTimeout(() => navigateTo('detail'), 1000);
+        }
+        
+        // 确认创建
+        function confirmCreate() {
+            showToast('组合创建成功');
+            setTimeout(() => navigateTo('list'), 1000);
+        }
+        
+        // Toast提示
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+        
+        // 点击弹窗外部关闭
+        document.getElementById('preview-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'preview-modal') {
+                closeModal();
+            }
+        });
+
+        // ==================== 收益走势时间区间切换 ====================
+        // 收益走势数据 - 各时间区间的数据
+        // 图表宽度为500px，数据点cx从0到500，起始点cx=0，终点cx=500
+        // Y轴范围：0%到+25%，图表高度约230px，每1%约9.2px
+        // X轴7个标签均匀分布，位置为0, 83, 166, 250, 333, 416, 500
+        // 成立日期: 2023-01-15，最新日期: 2026-04-30
+        const yieldData = {
+            '1m': {
+                // 近1月: 2026-03-30 至 2026-04-30
+                yAxis: ['+25%', '+20%', '+15%', '+10%', '+5%', '0%'],
+                xAxis: ['2026-03-30', '2026-04-05', '2026-04-10', '2026-04-15', '2026-04-20', '2026-04-25', '2026-04-30'],
+                // 基准线：起点cx=0，终点cx=500 (0%到+16%)
+                benchmark: '0,184 83,178 166,172 250,166 333,160 416,154 500,148',
+                // 组合线：起点cx=0，终点cx=500 (0%到+22%)
+                portfolio: '0,184 83,167 166,147 250,128 333,109 416,87 500,46',
+                points: [
+                    { cx: 0, cy: 184, value: '0.00%', date: '2026-03-30' },
+                    { cx: 83, cy: 167, value: '+2.00%', date: '2026-04-05' },
+                    { cx: 166, cy: 147, value: '+4.00%', date: '2026-04-10' },
+                    { cx: 250, cy: 128, value: '+6.00%', date: '2026-04-15' },
+                    { cx: 333, cy: 109, value: '+8.00%', date: '2026-04-20' },
+                    { cx: 416, cy: 87, value: '+10.50%', date: '2026-04-25' },
+                    { cx: 500, cy: 46, value: '+15.00%', date: '2026-04-30' }
+                ],
+                currentValue: '+15.00%',
+                currentBenchmark: '+10.00%'
+            },
+            '3m': {
+                // 近3月: 2026-01-30 至 2026-04-30
+                yAxis: ['+25%', '+20%', '+15%', '+10%', '+5%', '0%'],
+                xAxis: ['2026-01-30', '2026-02-15', '2026-03-01', '2026-03-15', '2026-04-01', '2026-04-15', '2026-04-30'],
+                // 基准线：0%到+16%
+                benchmark: '0,184 83,175 166,166 250,157 333,148 416,139 500,130',
+                // 组合线：0%到+20%
+                portfolio: '0,184 83,160 166,140 250,115 333,95 416,70 500,46',
+                points: [
+                    { cx: 0, cy: 184, value: '0.00%', date: '2026-01-30' },
+                    { cx: 83, cy: 160, value: '+2.50%', date: '2026-02-15' },
+                    { cx: 166, cy: 140, value: '+4.50%', date: '2026-03-01' },
+                    { cx: 250, cy: 115, value: '+7.50%', date: '2026-03-15' },
+                    { cx: 333, cy: 95, value: '+9.50%', date: '2026-04-01' },
+                    { cx: 416, cy: 70, value: '+12.00%', date: '2026-04-15' },
+                    { cx: 500, cy: 46, value: '+15.00%', date: '2026-04-30' }
+                ],
+                currentValue: '+15.00%',
+                currentBenchmark: '+10.00%'
+            },
+            '6m': {
+                // 近6月: 2025-10-30 至 2026-04-30
+                yAxis: ['+25%', '+20%', '+15%', '+10%', '+5%', '0%'],
+                xAxis: ['2025-10-30', '2025-11-30', '2025-12-30', '2026-01-30', '2026-02-28', '2026-03-30', '2026-04-30'],
+                // 基准线：0%到+18%
+                benchmark: '0,184 83,172 166,160 250,148 333,136 416,124 500,112',
+                // 组合线：0%到+22%
+                portfolio: '0,184 83,155 166,130 250,100 333,75 416,50 500,28',
+                points: [
+                    { cx: 0, cy: 184, value: '0.00%', date: '2025-10-30' },
+                    { cx: 83, cy: 155, value: '+3.00%', date: '2025-11-30' },
+                    { cx: 166, cy: 130, value: '+6.00%', date: '2025-12-30' },
+                    { cx: 250, cy: 100, value: '+9.00%', date: '2026-01-30' },
+                    { cx: 333, cy: 75, value: '+12.00%', date: '2026-02-28' },
+                    { cx: 416, cy: 50, value: '+15.00%', date: '2026-03-30' },
+                    { cx: 500, cy: 28, value: '+17.00%', date: '2026-04-30' }
+                ],
+                currentValue: '+17.00%',
+                currentBenchmark: '+12.00%'
+            },
+            '1y': {
+                // 近1年: 2025-04-30 至 2026-04-30
+                yAxis: ['+25%', '+20%', '+15%', '+10%', '+5%', '0%'],
+                xAxis: ['2025-04-30', '2025-07-31', '2025-10-31', '2026-01-31', '2026-04-30'],
+                // 基准线：0%到+18%
+                benchmark: '0,184 125,160 250,136 375,112 500,88',
+                // 组合线：0%到+22%
+                portfolio: '0,184 125,145 250,110 375,65 500,28',
+                points: [
+                    { cx: 0, cy: 184, value: '0.00%', date: '2025-04-30' },
+                    { cx: 125, cy: 145, value: '+4.00%', date: '2025-07-31' },
+                    { cx: 250, cy: 110, value: '+8.00%', date: '2025-10-31' },
+                    { cx: 375, cy: 65, value: '+13.00%', date: '2026-01-31' },
+                    { cx: 500, cy: 28, value: '+17.00%', date: '2026-04-30' }
+                ],
+                currentValue: '+17.00%',
+                currentBenchmark: '+12.00%'
+            },
+            'total': {
+                // 成立以来: 2023-01-15 至 2026-04-30
+                yAxis: ['+25%', '+20%', '+15%', '+10%', '+5%', '0%'],
+                xAxis: ['2023-01-15', '2023-07-15', '2024-01-15', '2024-07-15', '2025-01-15', '2025-07-15', '2026-01-15', '2026-04-30'],
+                // 基准线：0%到+18%
+                benchmark: '0,184 71,168 142,152 214,136 285,120 357,104 428,88 500,72',
+                // 组合线：0%到+23.45%
+                portfolio: '0,184 71,160 142,138 214,115 285,90 357,65 428,40 500,16',
+                points: [
+                    { cx: 0, cy: 184, value: '0.00%', date: '2023-01-15' },
+                    { cx: 71, cy: 160, value: '+2.50%', date: '2023-07-15' },
+                    { cx: 142, cy: 138, value: '+5.00%', date: '2024-01-15' },
+                    { cx: 214, cy: 115, value: '+7.50%', date: '2024-07-15' },
+                    { cx: 285, cy: 90, value: '+10.00%', date: '2025-01-15' },
+                    { cx: 357, cy: 65, value: '+13.00%', date: '2025-07-15' },
+                    { cx: 428, cy: 40, value: '+16.00%', date: '2026-01-15' },
+                    { cx: 500, cy: 16, value: '+18.00%', date: '2026-04-30' }
+                ],
+                currentValue: '+18.00%',
+                currentBenchmark: '+12.00%'
+            }
+        };
+
+        function switchYieldPeriod(period, targetBtn) {
+            // 切换按钮状态
+            document.querySelectorAll('#yield-filter-tabs .filter-tab').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            // 如果传入了目标按钮，使用传入的；否则根据period查找
+            const btnToActivate = targetBtn || document.querySelector(`#yield-filter-tabs .filter-tab[onclick*="'${period}'"]`);
+            if (btnToActivate) {
+                btnToActivate.classList.add('active');
+            }
+
+            const data = yieldData[period];
+            
+            // 更新Y轴
+            const yAxis = document.getElementById('yield-y-axis');
+            yAxis.innerHTML = data.yAxis.map(v => `<span>${v}</span>`).join('');
+            
+            // 更新X轴
+            const xAxis = document.getElementById('yield-x-axis');
+            xAxis.innerHTML = data.xAxis.map(v => `<span>${v}</span>`).join('');
+            
+            // 更新基准线
+            const benchmarkSvg = document.getElementById('benchmark-line');
+            benchmarkSvg.innerHTML = `<polyline points="${data.benchmark}" fill="none" stroke="#d9d9d9" stroke-width="2" stroke-dasharray="4,4"/>`;
+            
+            // 更新组合收益线
+            const yieldSvg = document.getElementById('yield-line');
+            let svgContent = `<polyline id="yield-polyline" points="${data.portfolio}" fill="none" stroke="#1890ff" stroke-width="2.5" stroke-linejoin="round"/>`;
+            
+            // 更新数据点 - 头尾用大圆点，中间用小圆点
+            const lastIdx = data.points.length - 1;
+            data.points.forEach((p, i) => {
+                const r = (i === 0 || i === lastIdx) ? '5' : '3';
+                svgContent += `<circle id="yield-point-${i+1}" cx="${p.cx}" cy="${p.cy}" r="${r}" fill="#1890ff"/>`;
+            });
+            
+            // 计算基准收益值
+            const benchmarkValue = data.currentBenchmark;
+            
+            // 更新tooltip - 显示在终点位置
+            const lastPoint = data.points[lastIdx];
+            const tooltipX = lastPoint.cx - 60;
+            svgContent += `<rect id="yield-tooltip-bg" x="${tooltipX}" y="-5" width="120" height="55" rx="4" fill="#333"/>`;
+            svgContent += `<text id="yield-tooltip-title" x="${tooltipX + 60}" y="12" text-anchor="middle" font-size="11" fill="#999">期末收益率</text>`;
+            svgContent += `<text id="yield-tooltip-portfolio" x="${tooltipX + 10}" y="28" text-anchor="start" font-size="11" fill="#1890ff">本组合</text>`;
+            svgContent += `<text id="yield-tooltip-portfolio-value" x="${tooltipX + 110}" y="28" text-anchor="end" font-size="12" fill="#1890ff" font-weight="600">${data.currentValue}</text>`;
+            svgContent += `<text id="yield-tooltip-benchmark" x="${tooltipX + 10}" y="44" text-anchor="start" font-size="11" fill="#999">基准</text>`;
+            svgContent += `<text id="yield-tooltip-benchmark-value" x="${tooltipX + 110}" y="44" text-anchor="end" font-size="12" fill="#999" font-weight="600">${benchmarkValue}</text>`;
+            
+            yieldSvg.innerHTML = svgContent;
+        }
+
+        // ==================== 风险指标时间区间切换 ====================
+        // 风险指标数据 - 各时间区间的数据
+        const riskData = {
+            '1y': {
+                volatility: '15.23%',
+                maxDrawdown: '-12.34%',
+                var: '-2.1%',
+                sharpe: '1.23',
+                alpha: '+3.21%',
+                beta: '0.85'
+            },
+            '3y': {
+                volatility: '12.85%',
+                maxDrawdown: '-18.56%',
+                var: '-2.8%',
+                sharpe: '1.45',
+                alpha: '+4.52%',
+                beta: '0.78'
+            },
+            '5y': {
+                volatility: '11.42%',
+                maxDrawdown: '-25.73%',
+                var: '-3.2%',
+                sharpe: '1.68',
+                alpha: '+5.83%',
+                beta: '0.72'
+            }
+        };
+
+        function switchRiskPeriod(period) {
+            // 切换按钮状态
+            document.querySelectorAll('#risk-filter-tabs .filter-tab').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            const data = riskData[period];
+            
+            // 更新各指标值
+            document.querySelectorAll('#risk-tbody .risk-value').forEach(cell => {
+                const key = cell.getAttribute('data-key');
+                if (key && data[key]) {
+                    cell.textContent = data[key];
+                    // 更新颜色类
+                    cell.classList.remove('gain', 'loss');
+                    if (data[key].startsWith('+')) {
+                        cell.classList.add('gain');
+                    } else if (data[key].startsWith('-') && key !== 'beta' && key !== 'sharpe' && key !== 'alpha') {
+                        cell.classList.add('loss');
+                    }
+                }
+            });
+        }
+
+        // 页面加载时默认选中近1月
+        window.addEventListener('load', function() {
+            calculateChange();
+            // 默认触发近1月的数据加载，传入第一个按钮作为目标
+            const firstBtn = document.querySelector('#yield-filter-tabs .filter-tab');
+            switchYieldPeriod('1m', firstBtn);
+        });
+    </script>
+</body>
+</html>
